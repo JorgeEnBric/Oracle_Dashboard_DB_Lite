@@ -1,0 +1,27 @@
+{
+  "name": "checkdatabase",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JorgeEnBric/CheckDatabase.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JorgeEnBric/CheckDatabase/issues"
+  },
+  "homepage": "https://github.com/JorgeEnBric/CheckDatabase#readme",
+  "dependencies": {
+    "ejs": "^5.0.1",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "oracledb": "^6.10.0"
+  }
+}

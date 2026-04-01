@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Base de Datos</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: auto; }
+        .central-zone { border: 1px solid #ccc; padding: 20px; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Dashboard de Base de Datos</h1>
+        <% if (typeof error !== 'undefined' && error) { %>
+            <p style="color: red;">Error: <%= error %></p>
+        <% } %>
+        <button onclick="logout()">Cerrar Conexión</button>
+        <div class="central-zone">
+            <h2>Tablas en la Base de Datos</h2>
+            <% if (tables && tables.length > 0) { %>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre de la Tabla</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% tables.forEach(table => { %>
+                            <tr>
+                                <td><%= table[0] %></td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            <% } else { %>
+                <p>No se encontraron tablas o error en la consulta.</p>
+            <% } %>
+        </div>
+        
+        <div class="analysis-zone" style="border: 1px solid #ccc; padding: 20px; margin-top: 20px;">
+            <h2>Analizar Base de Datos</h2>
+            <form action="/analyze" method="POST">
+                <label for="startDate">Fecha y Hora Inicio:</label>
+                <input type="datetime-local" id="startDate" name="startDate" required><br><br>
+                
+                <label for="endDate">Fecha y Hora Fin:</label>
+                <input type="datetime-local" id="endDate" name="endDate" required><br><br>
+                
+                <button type="submit">Analizar</button>
+            </form>
+            <% if (alertLogs && alertLogs.length > 0) { %>
+                <h3>Últimas líneas del Alert Log</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Mensaje</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% alertLogs.forEach(log => { %>
+                            <tr>
+                                <td><%= log[0] %></td>
+                                <td><%= log[1] %></td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            <% } %>
+        </div>
+    </div>
+
+    <script>
+        function logout() {
+            fetch('/logout', { method: 'POST' })
+                .then(() => window.location.href = '/')
+                .catch(err => console.error('Error al cerrar sesión:', err));
+        }
+    </script>
+</body>
+</html>
