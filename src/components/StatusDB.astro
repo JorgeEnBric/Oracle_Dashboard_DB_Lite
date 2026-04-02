@@ -1,0 +1,63 @@
+---
+import { executeQuery } from '../server.js';
+
+const sessionCookie = Astro.cookies.get('db_session')?.json();
+console.log(sessionCookie);
+
+let data = [];
+let error = null;
+
+if (!sessionCookie) {
+    // Si no hay sesión, redirigimos al login
+    return Astro.redirect('/login');
+}
+
+try {
+    data = await executeQuery('SELECT name, open_mode FROM v$database', sessionCookie);
+    console.log('Resultado de la consulta:', data);
+} catch (e) {
+    error = e.message;
+}
+
+
+---
+<div class="status-zone ">
+    {data.length > 0 ? (
+        <table>
+            <thead>
+                <tr>
+                    {/* Los encabezados salen de las llaves del objeto */}
+                    {Object.keys(data[0]).map(key => <th>{key}</th>)}
+                </tr>
+            </thead>
+            <tbody>
+                {data.map(row => (
+                    <tr>
+                        {Object.values(row).map(value => (
+                            <td>{value?.toString() ?? 'NULL'}</td>
+                        ))}
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    ) : (
+        <p>No hay datos disponibles.</p>
+    )}
+</div>
+<style>
+    .status-zone {
+      
+    }
+    table {
+        border-collapse: collapse;
+        width: 50%;
+    }
+    th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+    th {
+        background-color: #f2f2f2;
+    }
+</style>

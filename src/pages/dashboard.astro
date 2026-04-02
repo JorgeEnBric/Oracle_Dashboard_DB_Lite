@@ -1,0 +1,39 @@
+---
+import StatusDB from '../components/StatusDB.astro';
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Base de Datos</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: auto; }
+    </style>
+</head>
+
+<body>
+    
+    <div class="container">
+        <h1>Dashboard de Base de Datos</h1>
+   <button type="button" id="logoutButton">Cerrar sesión</button>
+
+            <h2>Información de la Base de Datos</h2>
+            <StatusDB />
+        </div>
+     </div>     
+    <script> 
+        function logout() {
+            fetch('/api/logout', { method: 'POST' })
+                .then(() => window.location.href = '/')
+                .catch(err => console.error('Error al cerrar sesión:', err));
+        }
+
+     document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('logoutButton')?.addEventListener('click', logout);
+        });   
+    </script>
+</body>
+</html>
