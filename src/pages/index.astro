@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,8 +7,9 @@
     <title>Conexión a Base de Datos</title>
 </head>
 <body>
+    
     <h1>Conectar a Base de Datos</h1>
-    <form action="/connect" method="POST">
+    <form action="/api/connect" method="POST">
         <label for="usuario">Usuario:</label>
         <input type="text" id="usuario" name="usuario" value="TEST"><br><br>
         
@@ -24,7 +26,7 @@
         <input type="text" id="service" name="service" value="Origen" required><br><br>
         
         <button type="submit">Conectar</button>
-        <button type="button" onclick="testConnection()">Test Conexión</button>
+        <button type="button" id="testButton">Test Conexión</button>
     </form>
 
     <script>
@@ -35,16 +37,12 @@
             const port = document.getElementById('port').value;
             const service = document.getElementById('service').value;
 
-            const params = new URLSearchParams({
-                usuario,
-                password,
-                host,
-                port,
-                service
-            });
-
             try {
-                const response = await fetch(`/test-connection?${params}`);
+                const response = await fetch('/api/test-connection', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ usuario, password, host, port, service })
+                });
                 const result = await response.json();
                 if (result.success) {
                     alert('Conexión exitosa');
@@ -55,6 +53,10 @@
                 alert('Error al probar conexión: ' + err.message);
             }
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('testButton').addEventListener('click', testConnection);
+        });
     </script>
 </body>
 </html>
