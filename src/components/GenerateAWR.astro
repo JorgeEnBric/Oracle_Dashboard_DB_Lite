@@ -1,0 +1,117 @@
+---
+import AwrViewer from './AwrViwer.astro';
+import { getAWRReport, executeQuery } from '../server.js';
+
+const session = Astro.cookies.get('db_session')?.json();
+
+// 1. Capturamos los parámetros de la URL si existen
+const url = new URL(Astro.request.url);
+const snapStart = url.searchParams.get('start');
+const snapEnd = url.searchParams.get('end');
+
+let awrData = "";
+let snaps = [];
+
+if (session) {
+    // Obtenemos datos básicos
+    const bd_id = await executeQuery(
+        "SELECT dbid, instance_number FROM v$database, v$instance", 
+        session
+    );
+    const { DBID, INSTANCE_NUMBER } = bd_id[0];
+
+    // Obtenemos la lista de snapshots
+    snaps = await executeQuery(
+        "SELECT to_char(BEGIN_INTERVAL_TIME, 'DD/MM/YYYY HH24:MI:SS') as BEGIN_INTERVAL_TIME, to_char(END_INTERVAL_TIME, 'DD/MM/YYYY HH24:MI:SS') as END_INTERVAL_TIME, snap_id FROM dba_hist_snapshot ORDER BY snap_id DESC", 
+        session
+    );
+
+    // 2. Si el usuario ya seleccionó snaps (están en la URL), generamos el reporte
+    if (snapStart && snapEnd) {
+        awrData = await getAWRReport(DBID, INSTANCE_NUMBER, session, snapStart, snapEnd);
+    }
+}
+---
+
+<div class="snap-selector">
+  <label for="snap_start">Snap Inicial:</label>
+  <select id="snap_start" name="snap_start">
+    {snaps.map((row: { SNAP_ID: string, BEGIN_INTERVAL_TIME: string }) => (
+      <option value={row.SNAP_ID} selected={snapStart === String(row.SNAP_ID)}>
+        {row.SNAP_ID} ({row.BEGIN_INTERVAL_TIME})
+      </option>
+    ))}
+  </select>
+
+  <label for="snap_end">Snap Final:</label>
+  <select id="snap_end" name="snap_end">
+    {snaps.map((row: { SNAP_ID: string, END_INTERVAL_TIME: string }) => (
+      <option value={row.SNAP_ID} selected={snapEnd === String(row.SNAP_ID)}>
+        {row.SNAP_ID} ({row.END_INTERVAL_TIME})
+      </option>
+    ))}
+  </select>
+  
+  <button id="generateReport">Generar Reporte</button>
+</div>
+
+<div title="Oracle AWR Analysis">
+    <section class="p-6">
+        <h2>Generador de Reportes AWR</h2>
+        
+        {awrData ? (
+            <AwrViewer htmlContent={awrData} />
+        ) : (
+            <p>{snapStart ? "Generando reporte..." : "Seleccione un rango de snaps para comenzar."}</p>
+        )}
+    </section>
+</div>
+
+<script>
+  document.getElementById("generateReport")?.addEventListener("click", () => {
+    const start = (document.getElementById("snap_start") as HTMLSelectElement).value;
+    const end = (document.getElementById("snap_end") as HTMLSelectElement).value;
+
+    if (parseInt(start) > parseInt(end)) {
+      alert("Error: El Snap de Inicio no puede ser mayor al Snap de Fin.");
+      return;
+    }
+
+    // 3. Recargamos la página con los nuevos parámetros
+    // Esto hace que el código de arriba (Astro) se vuelva a ejecutar con los valores
+    const url = new URL(window.location.href);
+    url.searchParams.set('start', start);
+    url.searchParams.set('end', end);
+    window.location.href = url.toString();
+  });
+</script>
+
+<style>
+  .snap-selector {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    background: #1e1e1e;
+    padding: 20px;
+    border-radius: 8px;
+    color: white;
+    margin-bottom: 2rem;
+  }
+  select {
+    padding: 5px;
+    background: #333;
+    color: #fff;
+    border: 1px solid #555;
+  }
+  button {
+    padding: 8px 16px;
+    background: #0070f3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #0051ad;
+  }
+</style>

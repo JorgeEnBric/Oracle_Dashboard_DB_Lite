@@ -1,5 +1,9 @@
 ---
 import StatusDB from '../components/StatusDB.astro';
+import AlertLog from '../components/AlertLog.astro';
+import ActiveEvent from '../components/ActiveEvent.astro';
+import GenerateAWR from '../components/GenerateAWR.astro';
+
 ---
 
 <!DOCTYPE html>
@@ -22,9 +26,16 @@ import StatusDB from '../components/StatusDB.astro';
 
             <h2>Información de la Base de Datos</h2>
             <StatusDB />
+            <h2>Alert Log</h2>
+            <AlertLog />
+            <h2>Active Events & ASH ultima hora</h2>
+            <ActiveEvent />
+            <h2>Generador de Reportes AWR</h2>
+            <GenerateAWR />
         </div>
      </div>     
     <script> 
+
         function logout() {
             fetch('/api/logout', { method: 'POST' })
                 .then(() => window.location.href = '/')
@@ -32,6 +43,7 @@ import StatusDB from '../components/StatusDB.astro';
         }
 
      document.addEventListener('DOMContentLoaded', () => {
+
             document.getElementById('logoutButton')?.addEventListener('click', logout);
         });   
     </script>
