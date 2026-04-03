@@ -11,12 +11,12 @@ import Dock from "../components/Dock.astro";
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Dashboard - Base de Datos</title>
+        <title>DBA Console Lite</title>
     </head>
 
     <body>
         <div class="container">
-            <h1>Dashboard de Base de Datos</h1>
+            
             <button type="button" id="logoutButton">Cerrar sesión</button>
 
             <!-- db-info: visible por defecto -->
@@ -68,13 +68,63 @@ import Dock from "../components/Dock.astro";
     }
 
     section {
+        width: 100%;
         transition: all 0.3s ease-in-out;
     }
 
+    :root {
+        --bg-dark: #0f1117;
+        --card-bg: #1a1d26;
+        --accent-blue: #3b82f6;
+        --accent-red: #e11d48;
+        --text-main: #ffffff;
+        --text-muted: #94a3b8;
+        --input-bg: #242936;
+        --border-color: #334155;
+    }
+
+    * {
+        margin: 0;
+        padding: 10px;
+        box-sizing: border-box;
+        font-family:
+            "Inter",
+            system-ui,
+            -apple-system,
+            sans-serif;
+    }
+
     body {
-        background-color: #121212;
-        color: #e2e8f0;
-        font-family: "Inter", system-ui, sans-serif;
+    background-color: var(--bg-dark);
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+
+      /* CAMBIOS AQUÍ */
+        min-height: 100vh;      /* Cambia height por min-height para permitir scroll */
+        display: flex;
+        justify-content: center;
+        align-items: flex-start; /* Alinea al inicio (arriba) en lugar de center */
+        padding-top: 6rem;      /* Espacio superior para que no pegue al borde */
+        color: var(--text-main);
+        overflow-y: auto;
+    }
+
+    .container {
+    width: 100%;
+    margin-top: 10px;
+    max-width: 1200px;
+    padding: 0 2rem 5rem 2rem; /* Más padding abajo para que el Dock no tape nada */
+    display: flex;
+    flex-direction: column;
+    gap: 2rem; /* Espacio uniforme entre secciones */
+    }
+  
+    button {
+        position: absolute;
+        top: 20px;
+        right: 20px;
     }
 
     h2,
