@@ -1,51 +1,103 @@
 ---
-import StatusDB from '../components/StatusDB.astro';
-import AlertLog from '../components/AlertLog.astro';
-import ActiveEvent from '../components/ActiveEvent.astro';
-import GenerateAWR from '../components/GenerateAWR.astro';
-
+import StatusDB from "../components/StatusDB.astro";
+import AlertLog from "../components/AlertLog.astro";
+import ActiveEvent from "../components/ActiveEvent.astro";
+import GenerateAWR from "../components/GenerateAWR.astro";
+import Dock from "../components/Dock.astro";
 ---
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Base de Datos</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .container { max-width: 800px; margin: auto; }
-    </style>
-</head>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Dashboard - Base de Datos</title>
+    </head>
 
-<body>
-    
-    <div class="container">
-        <h1>Dashboard de Base de Datos</h1>
-   <button type="button" id="logoutButton">Cerrar sesión</button>
+    <body>
+        <div class="container">
+            <h1>Dashboard de Base de Datos</h1>
+            <button type="button" id="logoutButton">Cerrar sesión</button>
 
-            <h2>Información de la Base de Datos</h2>
-            <StatusDB />
-            <h2>Alert Log</h2>
-            <AlertLog />
-            <h2>Active Events & ASH ultima hora</h2>
-            <ActiveEvent />
-            <h2>Generador de Reportes AWR</h2>
-            <GenerateAWR />
+            <!-- db-info: visible por defecto -->
+            <section id="db-info" class="component">
+                <h2>Información de la Base de Datos</h2>
+                <StatusDB />
+            </section>
+
+            <!-- El resto inician ocultos -->
+            <section id="alert-log" class="component hidden-component">
+                <h2>Alert Log</h2>
+                <AlertLog />
+            </section>
+
+            <section id="ash" class="component hidden-component">
+                <h2>Active Events & ASH ultima hora</h2>
+                <ActiveEvent />
+            </section>
+
+            <section id="awr-tool" class="component hidden-component">
+                <h2>Generador de Reportes AWR</h2>
+                <GenerateAWR />
+            </section>
         </div>
-     </div>     
-    <script> 
 
-        function logout() {
-            fetch('/api/logout', { method: 'POST' })
-                .then(() => window.location.href = '/')
-                .catch(err => console.error('Error al cerrar sesión:', err));
-        }
+        <Dock />
 
-     document.addEventListener('DOMContentLoaded', () => {
+        <script>
+            function logout() {
+                fetch("/api/logout", { method: "POST" })
+                    .then(() => (window.location.href = "/"))
+                    .catch((err) =>
+                        console.error("Error al cerrar sesión:", err),
+                    );
+            }
 
-            document.getElementById('logoutButton')?.addEventListener('click', logout);
-        });   
-    </script>
-</body>
+            document.addEventListener("DOMContentLoaded", () => {
+                document
+                    .getElementById("logoutButton")
+                    ?.addEventListener("click", logout);
+            });
+        </script>
+    </body>
 </html>
+
+<style>
+    .hidden-component {
+        display: none !important;
+    }
+
+    section {
+        transition: all 0.3s ease-in-out;
+    }
+
+    body {
+        background-color: #121212;
+        color: #e2e8f0;
+        font-family: "Inter", system-ui, sans-serif;
+    }
+
+    h2,
+    h3 {
+        color: #3b82f6;
+        margin-bottom: 1rem;
+        font-weight: 600;
+        border-left: 4px solid #3b82f6;
+        padding-left: 1rem;
+    }
+
+    #logoutButton {
+        background-color: #ef4444;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background 0.2s;
+    }
+
+    #logoutButton:hover {
+        background-color: #dc2626;
+    }
+</style>

@@ -45,13 +45,38 @@ const headers = hasData ? Object.keys(data[0]) : [];
 </div>
 
 <style>
+  /* Cabeceras de Tabla */
+th {
+  background-color: #2d3748; /* Un gris un poco más claro que el fondo */
+  color: #63b3ed; /* Texto azul para los headers */
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 2px solid #3b82f6;
+}
+
+/* Celdas */
+td {
+  padding: 10px 15px;
+  border-bottom: 1px solid #2d3748;
+  font-size: 0.85rem;
+  font-family: 'Fira Code', 'Courier New', monospace; /* Fuente técnica para DBAs */
+}
+
+/* Filas Alternas (Zebra) */
+tr:nth-child(even) {
+  background-color: #232323;
+}
+
   .table-container {
-    margin-bottom: 2rem;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    border: 1px solid #e2e8f0;
-    overflow: hidden;
+  background-color: #1e1e1e; /* Color del selector de snaps */
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
   }
   .table-title {
     padding: 1rem;
@@ -70,22 +95,7 @@ const headers = hasData ? Object.keys(data[0]) : [];
     border-collapse: collapse;
     font-size: 0.9rem;
   }
-  th {
-    background-color: #f1f5f9;
-    color: #475569;
-    text-align: left;
-    padding: 0.75rem 1rem;
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    letter-spacing: 0.025em;
-    border-bottom: 2px solid #e2e8f0;
-  }
-  td {
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid #f1f5f9;
-    color: #334155;
-    white-space: nowrap;
-  }
+ 
   tr:hover {
     background-color: #f8fafc;
   }
@@ -99,4 +109,11 @@ const headers = hasData ? Object.keys(data[0]) : [];
     text-align: center;
     color: #94a3b8;
   }
+    td:contains("ORA-"), td:contains("Error") {
+    color: #f87171; /* Rojo suave para errores */
+  }
+  tr:hover {
+  background-color: #2d3748;
+  transition: background 0.2s ease;
+}
 </style>
