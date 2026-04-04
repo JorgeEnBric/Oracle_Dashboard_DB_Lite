@@ -1,0 +1,119 @@
+---
+// src/components/Table.astro
+interface Props {
+  data: any[];
+  title?: string;
+}
+
+const { data, title } = Astro.props;
+
+// Validamos que data sea un array y tenga contenido
+const hasData = Array.isArray(data) && data.length > 0;
+// Obtenemos los encabezados de las llaves del primer objeto
+const headers = hasData ? Object.keys(data[0]) : [];
+---
+
+<div class="table-container">
+  {title && <h3 class="table-title">{title}</h3>}
+  
+  {hasData ? (
+    <div class="scroll-wrapper">
+      <table>
+        <thead>
+          <tr>
+            {headers.map((header) => (
+              <th>{header}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((row) => (
+            <tr>
+              {Object.values(row).map((value) => (
+                <td>{value?.toString() ?? <span class="null-value">NULL</span>}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  ) : (
+    <div class="empty-state">
+      <p>No hay registros disponibles para mostrar.</p>
+    </div>
+  )}
+</div>
+
+<style>
+  /* Cabeceras de Tabla */
+th {
+  background-color: #2d3748; /* Un gris un poco más claro que el fondo */
+  color: #63b3ed; /* Texto azul para los headers */
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 2px solid #3b82f6;
+}
+
+/* Celdas */
+td {
+  padding: 10px 15px;
+  border-bottom: 1px solid #2d3748;
+  font-size: 0.85rem;
+  font-family: 'Fira Code', 'Courier New', monospace; /* Fuente técnica para DBAs */
+}
+
+/* Filas Alternas (Zebra) */
+tr:nth-child(even) {
+  background-color: #232323;
+}
+
+  .table-container {
+  background-color: #1e1e1e; /* Color del selector de snaps */
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+  }
+  .table-title {
+    padding: 1rem;
+    margin: 0;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 1rem;
+    color: #1e293b;
+    font-weight: 600;
+  }
+  .scroll-wrapper {
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+ 
+  tr:hover {
+    background-color: #f8fafc;
+  }
+  .null-value {
+    color: #cbd5e1;
+    font-style: italic;
+    font-size: 0.8rem;
+  }
+  .empty-state {
+    padding: 2rem;
+    text-align: center;
+    color: #94a3b8;
+  }
+    td:contains("ORA-"), td:contains("Error") {
+    color: #f87171; /* Rojo suave para errores */
+  }
+  tr:hover {
+  background-color: #2d3748;
+  transition: background 0.2s ease;
+}
+</style>

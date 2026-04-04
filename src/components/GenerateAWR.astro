@@ -1,0 +1,371 @@
+---
+import AwrViewer from './AwrViwer.astro';
+import { executeQuery } from '../server.js';
+
+const session = Astro.cookies.get('db_session')?.json();
+
+let snaps = [];
+
+if (session) {
+    snaps = await executeQuery(
+        "SELECT to_char(BEGIN_INTERVAL_TIME, 'DD/MM/YYYY HH24:MI:SS') as BEGIN_INTERVAL_TIME, to_char(END_INTERVAL_TIME, 'DD/MM/YYYY HH24:MI:SS') as END_INTERVAL_TIME, snap_id FROM dba_hist_snapshot ORDER BY snap_id DESC",
+        session
+    );
+}
+---
+
+<div class="snap-selector">
+  <label for="snap_start">Snap Inicial:</label>
+  <select id="snap_start" name="snap_start">
+    {snaps.map((row: { SNAP_ID: string, BEGIN_INTERVAL_TIME: string }) => (
+      <option value={row.SNAP_ID}>
+        {row.SNAP_ID} ({row.BEGIN_INTERVAL_TIME})
+      </option>
+    ))}
+  </select>
+
+  <label for="snap_end">Snap Final:</label>
+  <select id="snap_end" name="snap_end">
+    {snaps.map((row: { SNAP_ID: string, END_INTERVAL_TIME: string }) => (
+      <option value={row.SNAP_ID}>
+        {row.SNAP_ID} ({row.END_INTERVAL_TIME})
+      </option>
+    ))}
+  </select>
+
+  <button id="generateReport">Generar Reporte</button>
+</div>
+
+<!-- Barra de progreso (oculta por defecto) -->
+<div id="progress-container" class="progress-container" style="display:none;">
+  <div class="progress-label">
+    <span id="progress-text">Generando reporte AWR...</span>
+    <span id="progress-percent">0%</span>
+  </div>
+  <div class="progress-track">
+    <div id="progress-bar" class="progress-bar"></div>
+  </div>
+  <p class="progress-hint">Este proceso puede tardar varios minutos. No cierre la página.</p>
+</div>
+
+<!-- Mensaje de error (oculto por defecto) -->
+<div id="error-msg" class="error-msg" style="display:none;"></div>
+
+<div title="Oracle AWR Analysis">
+  <section class="p-6">
+       <!-- El reporte se inyectará aquí dinámicamente -->
+    <div id="awr-result">
+      <p>Seleccione un rango de snaps para comenzar.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+  const btn         = document.getElementById('generateReport') as HTMLButtonElement;
+  const progressBox = document.getElementById('progress-container') as HTMLDivElement;
+  const progressBar = document.getElementById('progress-bar') as HTMLDivElement;
+  const progressPct = document.getElementById('progress-percent') as HTMLSpanElement;
+  const progressTxt = document.getElementById('progress-text') as HTMLSpanElement;
+  const errorMsg    = document.getElementById('error-msg') as HTMLDivElement;
+  const awrResult   = document.getElementById('awr-result') as HTMLDivElement;
+
+  // Fases simuladas para dar feedback visual mientras se espera la respuesta
+  const PHASES = [
+    { label: 'Conectando con la base de datos...', pct: 5,  delay: 0    },
+    { label: 'Obteniendo metadatos de snapshots...', pct: 15, delay: 1200 },
+    { label: 'Ejecutando DBMS_WORKLOAD_REPOSITORY...', pct: 30, delay: 3000 },
+    { label: 'Recolectando estadísticas de SQL...', pct: 50, delay: 6000 },
+    { label: 'Procesando métricas de I/O...', pct: 65, delay: 10000 },
+    { label: 'Generando HTML del reporte...', pct: 80, delay: 15000 },
+    { label: 'Finalizando...', pct: 90, delay: 22000 },
+  ];
+
+  let phaseTimers: ReturnType<typeof setTimeout>[] = [];
+
+  function setProgress(pct: number, label?: string) {
+    progressBar.style.width = `${pct}%`;
+    progressPct.textContent = `${pct}%`;
+    if (label) progressTxt.textContent = label;
+  }
+
+  function startFakeProgress() {
+    phaseTimers.forEach(clearTimeout);
+    phaseTimers = [];
+    PHASES.forEach(({ label, pct, delay }) => {
+      const t = setTimeout(() => setProgress(pct, label), delay);
+      phaseTimers.push(t);
+    });
+  }
+
+  function stopFakeProgress() {
+    phaseTimers.forEach(clearTimeout);
+    phaseTimers = [];
+  }
+
+  btn.addEventListener('click', async () => {
+    const start = (document.getElementById('snap_start') as HTMLSelectElement).value;
+    const end   = (document.getElementById('snap_end') as HTMLSelectElement).value;
+
+    if (parseInt(start) > parseInt(end)) {
+      alert('Error: El Snap de Inicio no puede ser mayor al Snap de Fin.');
+      return;
+    }
+
+    // --- UI: mostrar progreso ---
+    errorMsg.style.display  = 'none';
+    awrResult.innerHTML     = '';
+    progressBox.style.display = 'block';
+    btn.disabled            = true;
+    btn.textContent         = 'Generando...';
+    setProgress(0, 'Iniciando...');
+    startFakeProgress();
+
+    try {
+      const response = await fetch('/api/generate-awr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ snapStart: start, snapEnd: end }),
+      });
+
+      stopFakeProgress();
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || `Error HTTP ${response.status}`);
+      }
+
+      // --- Progreso al 100% ---
+      setProgress(100, '¡Reporte generado!');
+      progressBar.classList.add('complete');
+
+      const data = await response.json();
+
+      // Espera breve para que el usuario vea el 100%
+      await new Promise(r => setTimeout(r, 600));
+
+      // --- Inyectar el reporte en el DOM sin recargar la página ---
+      progressBox.style.display = 'none';
+      progressBar.classList.remove('complete');
+
+      // Crear el visor inline (iframe con srcdoc)
+      awrResult.innerHTML = `
+        <div class="awr-container">
+          <div class="awr-header">
+            <div class="awr-header-left">
+            </div>
+            <div class="actions">
+              <button id="downloadHTML" class="btn-download" style="display: flex;
+                align-items: center;
+                gap: 6px;
+                padding: 0.45rem 1rem;
+                background: #10b981;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 600;
+                font-size: 0.85rem;">
+                Descargar HTML
+              </button>
+            </div>
+          </div>
+          <iframe
+            id="awrFrame"
+            title="Oracle AWR Report"
+            sandbox="allow-same-origin allow-scripts"
+            style="width: 100%; height: 80vh; border: none; border: 1px solid #334155; border-radius: 10px;
+            overflow: hidden;
+            background: #0f172a;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+            margin-top: 1rem;"
+          ></iframe>
+        </div>
+      `;
+
+      // srcdoc debe asignarse por JS para evitar problemas de sanitización de HTML
+      const iframe = document.getElementById('awrFrame') as HTMLIFrameElement;
+      iframe.srcdoc = data.html;
+
+      // Botón de descarga
+      document.getElementById('downloadHTML')?.addEventListener('click', () => {
+        const blob = new Blob([data.html], { type: 'text/html' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = `awr_report_${start}_${end}.html`;
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      });
+
+    } catch (err: any) {
+      stopFakeProgress();
+      progressBox.style.display = 'none';
+      errorMsg.textContent  = `❌ Error: ${err.message}`;
+      errorMsg.style.display = 'block';
+    } finally {
+      btn.disabled    = false;
+      btn.textContent = 'Generar Reporte';
+    }
+  });
+</script>
+
+<style>
+  .snap-selector {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    background: #1e1e1e;
+    padding: 20px;
+    border-radius: 8px;
+    color: white;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  select {
+    padding: 5px;
+    background: #333;
+    color: #fff;
+    border: 1px solid #555;
+    border-radius: 4px;
+  }
+  button {
+    padding: 8px 16px;
+    background: #0070f3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  button:hover:not(:disabled) { background: #0051ad; }
+  button:disabled {
+    background: #555;
+    cursor: not-allowed;
+  }
+
+  /* ── Barra de progreso ── */
+  .progress-container {
+    background: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin-bottom: 1.5rem;
+    color: #fff;
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.875rem;
+    margin-bottom: 8px;
+    color: #ccc;
+  }
+  #progress-percent { font-weight: 600; color: #60a5fa; }
+  .progress-track {
+    height: 10px;
+    background: #333;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #0070f3, #60a5fa);
+    border-radius: 999px;
+    transition: width 0.8s ease;
+  }
+  .progress-bar.complete {
+    background: linear-gradient(90deg, #10b981, #34d399);
+  }
+  .progress-hint {
+    font-size: 0.75rem;
+    color: #666;
+    margin-top: 8px;
+    margin-bottom: 0;
+  }
+
+  /* ── Error ── */
+  .error-msg {
+    background: #3b0a0a;
+    border: 1px solid #dc2626;
+    color: #fca5a5;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  /* ── Visor AWR inyectado ── */
+  #awr-result {
+    width: 100%;
+  }
+  .awr-container {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #0f172a;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    margin-top: 1rem;
+  }
+  .awr-header {
+    padding: 0.85rem 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #1e293b;
+    border-bottom: 1px solid #334155;
+    gap: 1rem;
+  }
+  .awr-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .awr-badge {
+    background: #0070f3;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    text-transform: uppercase;
+  }
+  .awr-header h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #e2e8f0;
+    font-weight: 600;
+  }
+  .awr-meta {
+    font-size: 0.75rem;
+    color: #64748b;
+  }
+  .actions { display: flex; gap: 8px; align-items: center; }
+  .btn-download {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.45rem 1rem;
+    background: #10b981;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .btn-download:hover { background: #059669; transform: translateY(-1px); }
+  .btn-download:active { transform: translateY(0); }
+  #awrFrame {
+    border: none;
+    width: 100%;
+    height: 82vh;
+    background: #fff;
+    display: block;
+  }
+</style>

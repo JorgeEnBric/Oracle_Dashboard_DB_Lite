@@ -1,0 +1,119 @@
+---
+const navItems = [
+  { id: 'db-info', icon: '📌', label: 'DB Info' },
+  { id: 'alert-log', icon: '⚠️', label: 'Alert Log' },
+  { id: 'awr-tool', icon: '📈', label: 'AWR Generator' },
+  { id: 'ash', icon: '🔍', label: 'ASH' }
+];
+---
+
+<nav class="dock-container">
+  <div class="dock">
+    {navItems.map(item => (
+      <div class="dock-item" data-target={item.id}>
+        <span class="icon">{item.icon}</span>
+        <span class="label">{item.label}</span>
+      </div>
+    ))}
+  </div>
+</nav>
+
+<script>
+  // Marcar db-info como activo al cargar (ya que es el visible por defecto)
+  const defaultItem = document.querySelector('.dock-item[data-target="db-info"]');
+  defaultItem?.classList.add('active');
+
+  document.querySelectorAll('.dock-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const targetId = item.getAttribute('data-target');
+      const targetElement = document.getElementById(targetId ?? '');
+
+      if (!targetElement) return;
+
+      // Ocultar todos los componentes
+      document.querySelectorAll('.component').forEach(component => {
+        component.classList.add('hidden-component');
+      });
+
+      // Mostrar solo el seleccionado
+      targetElement.classList.remove('hidden-component');
+
+      // Actualizar estado activo en el dock
+      document.querySelectorAll('.dock-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+    });
+  });
+</script>
+
+<style>
+  .hidden-component {
+    display: none !important;
+  }
+
+  .dock-container {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+  }
+
+  .dock {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(30, 30, 30, 0.8);
+    backdrop-filter: blur(12px);
+    padding: 10px 20px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+
+  .dock-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .dock-item:hover {
+    transform: scale(1.3) translateY(-10px);
+  }
+
+  .icon {
+    font-size: 28px;
+    padding: 8px;
+  }
+
+  .label {
+    position: absolute;
+    top: -35px;
+    background: #3b82f6;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+  }
+
+  .dock-item:hover .label {
+    opacity: 1;
+  }
+
+  /* Punto azul debajo del ítem activo */
+  .dock-item.active::after {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 4px;
+    background: #3b82f6;
+    border-radius: 50%;
+    margin-top: 2px;
+  }
+</style>

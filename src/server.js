@@ -51,7 +51,38 @@ app.get('/dashboard', checkAuth, async (req, res) => {
     }
 }); 
 
+export async function getAWRReport(bd_id, inst_id, session, bid, eid) {
+    let connection;
+  
+    try {
+        const { usuario, password, host, port, service } = session;
+        //connection = await oracledb.getConnection(session);
+        const connection = await oracledb.getConnection({
+            user: usuario,
+            password: password,
+            connectString: `${host}:${port}/${service}`
+        });
+        
+        const sql = `
+            SELECT output FROM TABLE(
+                dbms_workload_repository.awr_report_html(${bd_id}, ${inst_id},  :bid, :eid)
+            )`;
 
+        const result = await connection.execute(sql, {
+            bid: bid, // Snapshot inicial
+            eid: eid  // Snapshot final
+        });
+
+        // El AWR viene como un array de líneas, las unimos todas
+        const fullHtml = result.rows.map(row => row[0]).join('\n');
+        
+        await connection.close();
+        return fullHtml;
+    } catch (err) {
+        if (connection) await connection.close();
+        throw err;
+    }
+}
 
 //Función que recibe un query y lo ejecuta, devolviendo el resultado
 export async function executeQuery(query, session) {
@@ -81,20 +112,6 @@ export async function executeQuery(query, session) {
 
 
 
-function getAlertLogErrors(session, startDate, endDate) {
-    return executeQuery(session, 
-        "SELECT originating_timestamp, message_text FROM v$diag_alert_ext WHERE message_text LIKE '%ORA-%' AND originating_timestamp BETWEEN TO_TIMESTAMP(:1, 'YYYY-MM-DD HH24:MI:SS') AND TO_TIMESTAMP(:2, 'YYYY-MM-DD HH24:MI:SS') ORDER BY originating_timestamp DESC", 
-        [startDate.replace('T', ' '), endDate.replace('T', ' ')]);
-}
-
-//Funcion para obtener información general de la base de datos
-function getDatabaseInfo(session) {
-    return executeQuery(session, "SELECT name, open_mode FROM v$database");
-}
-
-
-
-
 // Ruta para logout
 app.post('/logout', (req, res) => {
     req.session.destroy(err => {
@@ -102,24 +119,6 @@ app.post('/logout', (req, res) => {
         res.redirect('/');
     });
 });
-
-// Ruta para analizar
-app.post('/analyze', async (req, res) => {
-    if (!req.session.dbConnection) {
-        return res.redirect('/');
-    }
-    try {
-        const result = await executeQuery(req.session, 
-            "SELECT originating_timestamp, message_text FROM v$diag_alert_ext WHERE message_text LIKE '%ORA-%' AND originating_timestamp BETWEEN TO_TIMESTAMP(:1, 'YYYY-MM-DD HH24:MI:SS') AND TO_TIMESTAMP(:2, 'YYYY-MM-DD HH24:MI:SS') ORDER BY originating_timestamp DESC", 
-            [req.body.startDate.replace('T', ' '), req.body.endDate.replace('T', ' ')]);
-        res.json({ success: true, data: result.rows });
-    } catch (err) {
-        console.error('Error leer el alertlog', err);
-        res.json({ success: false, error: err.message });
-    }
-    
-});
-
 
 
 // Puerto del servidor

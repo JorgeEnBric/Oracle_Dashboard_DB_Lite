@@ -1,39 +1,153 @@
 ---
-import StatusDB from '../components/StatusDB.astro';
+import StatusDB from "../components/StatusDB.astro";
+import AlertLog from "../components/AlertLog.astro";
+import ActiveEvent from "../components/ActiveEvent.astro";
+import GenerateAWR from "../components/GenerateAWR.astro";
+import Dock from "../components/Dock.astro";
 ---
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Base de Datos</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .container { max-width: 800px; margin: auto; }
-    </style>
-</head>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>DBA Console Lite</title>
+    </head>
 
-<body>
-    
-    <div class="container">
-        <h1>Dashboard de Base de Datos</h1>
-   <button type="button" id="logoutButton">Cerrar sesión</button>
+    <body>
+        <div class="container">
+            
+            <button type="button" id="logoutButton">Cerrar sesión</button>
 
-            <h2>Información de la Base de Datos</h2>
-            <StatusDB />
+            <!-- db-info: visible por defecto -->
+            <section id="db-info" class="component">
+                <h2>Información de la Base de Datos</h2>
+                <StatusDB />
+            </section>
+
+            <!-- El resto inician ocultos -->
+            <section id="alert-log" class="component hidden-component">
+                <h2>Alert Log</h2>
+                <AlertLog />
+            </section>
+
+            <section id="ash" class="component hidden-component">
+                <h2>Active Events & ASH ultima hora</h2>
+                <ActiveEvent />
+            </section>
+
+            <section id="awr-tool" class="component hidden-component">
+                <h2>Generador de Reportes AWR</h2>
+                <GenerateAWR />
+            </section>
         </div>
-     </div>     
-    <script> 
-        function logout() {
-            fetch('/api/logout', { method: 'POST' })
-                .then(() => window.location.href = '/')
-                .catch(err => console.error('Error al cerrar sesión:', err));
-        }
 
-     document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('logoutButton')?.addEventListener('click', logout);
-        });   
-    </script>
-</body>
+        <Dock />
+
+        <script>
+            function logout() {
+                fetch("/api/logout", { method: "POST" })
+                    .then(() => (window.location.href = "/"))
+                    .catch((err) =>
+                        console.error("Error al cerrar sesión:", err),
+                    );
+            }
+
+            document.addEventListener("DOMContentLoaded", () => {
+                document
+                    .getElementById("logoutButton")
+                    ?.addEventListener("click", logout);
+            });
+        </script>
+    </body>
 </html>
+
+<style>
+    .hidden-component {
+        display: none !important;
+    }
+
+    section {
+        width: 100%;
+        transition: all 0.3s ease-in-out;
+    }
+
+    :root {
+        --bg-dark: #0f1117;
+        --card-bg: #1a1d26;
+        --accent-blue: #3b82f6;
+        --accent-red: #e11d48;
+        --text-main: #ffffff;
+        --text-muted: #94a3b8;
+        --input-bg: #242936;
+        --border-color: #334155;
+    }
+
+    * {
+        margin: 0;
+        padding: 10px;
+        box-sizing: border-box;
+        font-family:
+            "Inter",
+            system-ui,
+            -apple-system,
+            sans-serif;
+    }
+
+    body {
+    background-color: var(--bg-dark);
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+
+      /* CAMBIOS AQUÍ */
+        min-height: 100vh;      /* Cambia height por min-height para permitir scroll */
+        display: flex;
+        justify-content: center;
+        align-items: flex-start; /* Alinea al inicio (arriba) en lugar de center */
+        padding-top: 6rem;      /* Espacio superior para que no pegue al borde */
+        color: var(--text-main);
+        overflow-y: auto;
+    }
+
+    .container {
+    width: 100%;
+    margin-top: 10px;
+    max-width: 1200px;
+    padding: 0 2rem 5rem 2rem; /* Más padding abajo para que el Dock no tape nada */
+    display: flex;
+    flex-direction: column;
+    gap: 2rem; /* Espacio uniforme entre secciones */
+    }
+  
+    button {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+    }
+
+    h2,
+    h3 {
+        color: #3b82f6;
+        margin-bottom: 1rem;
+        font-weight: 600;
+        border-left: 4px solid #3b82f6;
+        padding-left: 1rem;
+    }
+
+    #logoutButton {
+        background-color: #ef4444;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background 0.2s;
+    }
+
+    #logoutButton:hover {
+        background-color: #dc2626;
+    }
+</style>

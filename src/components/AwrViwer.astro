@@ -1,0 +1,52 @@
+---
+// src/components/AwrViewer.astro
+interface Props {
+  htmlContent: string;
+}
+
+const { htmlContent } = Astro.props;
+---
+
+<div class="awr-container">
+  <div class="awr-header">
+    <h3>Reporte AWR Generado</h3>
+    <div class="actions">
+      <button id="downloadHTML" class="btn-download">Descargar HTML</button>
+    </div>
+  </div>
+  
+  <div class="content-wrapper">
+    {htmlContent ? (
+      <iframe 
+        id="awrFrame"
+        srcdoc={htmlContent} 
+        title="Oracle AWR Report"
+        sandbox="allow-same-origin allow-scripts"
+      ></iframe>
+    ) : (
+      <div class="error">No se pudo generar el contenido del reporte o seleccione un rango.</div>
+    )}
+  </div>
+</div>
+
+<script>
+  // Mantenemos tu lógica de descarga igual
+  document.getElementById("downloadHTML")?.addEventListener("click", () => {
+    const iframe = document.getElementById("awrFrame") as HTMLIFrameElement;
+    if (!iframe) return;
+
+    const content = iframe.getAttribute('srcdoc');
+    if (content) {
+      const blob = new Blob([content], { type: 'text/html' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const params = new URLSearchParams(window.location.search);
+      a.href = url;
+      a.download = `awr_report_${params.get('start') || 'start'}_${params.get('end') || 'end'}.html`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    }
+  });
+</script>
