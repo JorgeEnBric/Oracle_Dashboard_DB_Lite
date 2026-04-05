@@ -1,0 +1,42 @@
+---
+import { executeQuery } from '../server.js';
+import Table from './Table.astro';
+import  AccionButton  from './AccionButton.astro';
+
+const sessionCookie = Astro.cookies.get('db_session')?.json();
+console.log(sessionCookie);
+
+let data = [];
+let error = null;
+
+let query = `
+SELECT INST_ID, sid, serial#, opname,target,username,message, sql_id,
+round(sofar/totalwork*100,2) Porcentaje
+FROM gv$session_longops
+WHERE totalwork != 0
+AND sofar <> totalwork
+ORDER BY elapsed_seconds DESC
+`;
+
+if (!sessionCookie) {
+    // Si no hay sesión, redirigimos al login
+    return Astro.redirect('/login');
+}
+
+try {
+    data = await executeQuery(query, sessionCookie);
+} catch (e) {
+    error = e.message;
+}
+---
+<div class="longsession-zone">
+    {error ? (
+        <p class="error-message">Error al obtener las sesiones largas: {error}</p>
+    ) : data? (
+        <AccionButton data={data} title="Sesiones largas" accion="Kill session" />
+    ) : (
+        <p>No hay sesiones largas en este momento.</p>
+    )}
+</div>
+
+

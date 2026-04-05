@@ -1,0 +1,108 @@
+---
+import { executeQuery } from '../server.js';
+import Table from './Table.astro';
+
+const sessionCookie = Astro.cookies.get('db_session')?.json();
+console.log(sessionCookie);
+
+let data = [];
+let error = null;
+let query = `
+WITH pga_actual AS (
+    SELECT 
+        inst_id,
+        MAX(CASE WHEN pga_target_factor = 1 THEN estd_pga_cache_hit_percentage END) AS cache_hit_actual,
+        MAX(CASE WHEN pga_target_factor = 1 THEN ROUND(pga_target_for_estimate/1024/1024, 2) END) AS pga_actual_mb
+    FROM gv$pga_target_advice
+    WHERE pga_target_for_estimate IS NOT NULL
+    GROUP BY inst_id
+),
+sga_advice AS (
+    SELECT
+        inst_id,
+        CASE 
+            WHEN COUNT(CASE WHEN sga_size_factor > 1 
+                            AND estd_db_time_factor < 0.95 THEN 1 END) > 0 
+            THEN 
+                'MEJORA: Ganancia de rendimiento ajustando desde ' || 
+                MIN(CASE WHEN sga_size_factor > 1 
+                         AND estd_db_time_factor < 0.95 THEN sga_size END) || 
+                ' MB hasta ' || 
+                MAX(CASE WHEN sga_size_factor > 1 
+                         AND estd_db_time_factor < 0.95 THEN sga_size END) || 
+                ' MB. Tamaño actual: ' || 
+                MAX(CASE WHEN sga_size_factor = 1 THEN sga_size END) || ' MB.' ||
+                ' (DB Time Factor minimo: ' ||
+                MIN(CASE WHEN sga_size_factor > 1 
+                         AND estd_db_time_factor < 0.95 
+                         THEN ROUND(estd_db_time_factor, 3) END) || ')'
+            ELSE 
+                'El tamaño actual (' || 
+                MAX(CASE WHEN sga_size_factor = 1 THEN sga_size END) || 
+                ' MB) ya es óptimo para la carga actual de esta instancia'
+        END AS advice_sga
+    FROM gv$sga_target_advice
+    WHERE sga_size IS NOT NULL
+    GROUP BY inst_id
+),
+pga_advice AS (
+    SELECT
+        a.inst_id,
+        CASE 
+            WHEN COUNT(CASE WHEN a.pga_target_factor > 1 
+                            AND a.estd_pga_cache_hit_percentage > p.cache_hit_actual
+                            AND a.estd_overalloc_count = 0 THEN 1 END) > 0 
+            THEN 
+                'MEJORA: Ganancia de rendimiento ajustando desde ' || 
+                MIN(CASE WHEN a.pga_target_factor > 1 
+                         AND a.estd_overalloc_count = 0 THEN 
+                         ROUND(a.pga_target_for_estimate/1024/1024, 2) END) || 
+                ' MB hasta ' || 
+                MAX(CASE WHEN a.pga_target_factor > 1 
+                         AND a.estd_overalloc_count = 0 THEN 
+                         ROUND(a.pga_target_for_estimate/1024/1024, 2) END) || 
+                ' MB. Tamaño actual: ' || p.pga_actual_mb || 
+                ' MB. (Cache Hit actual: ' || p.cache_hit_actual || 
+                '% → Máximo estimado: ' ||
+                MAX(CASE WHEN a.pga_target_factor > 1 
+                         AND a.estd_overalloc_count = 0 
+                    THEN a.estd_pga_cache_hit_percentage END) || '%)'
+            ELSE 
+                'El tamaño actual (' || p.pga_actual_mb || 
+                ' MB) ya es óptimo para la carga actual de esta instancia. Cache Hit: ' || 
+                p.cache_hit_actual || '%'
+        END AS advice_pga
+    FROM gv$pga_target_advice a
+    JOIN pga_actual p ON a.inst_id = p.inst_id
+    WHERE a.pga_target_for_estimate IS NOT NULL
+    GROUP BY a.inst_id, p.cache_hit_actual, p.pga_actual_mb
+)
+SELECT
+    s.inst_id                                    AS INSTANCIA,
+    'REVISIÓN SGA (Instancia ' || s.inst_id || '): ' || s.advice_sga  AS ADVICE_SGA,
+    'REVISIÓN PGA (Instancia ' || p.inst_id || '): ' || p.advice_pga  AS ADVICE_PGA
+FROM sga_advice s
+JOIN pga_advice p ON s.inst_id = p.inst_id
+ORDER BY s.inst_id 
+`;
+
+if (!sessionCookie) {
+    // Si no hay sesión, redirigimos al login
+    return Astro.redirect('/login');
+}
+
+try {
+    data = await executeQuery(query, sessionCookie);
+} catch (e) {
+    error = e.message;
+}
+---
+<div class="infosga-pga-zone">
+    {error ? (
+        <p class="error-message">Error al obtener la información de SGA/PGA: {error}</p>
+    ) : data.length > 0 ? (
+        <Table data={data} title="Revisión de SGA y PGA" />
+    ) : (
+        <p>No hay datos disponibles.</p>
+    )}
+</div>

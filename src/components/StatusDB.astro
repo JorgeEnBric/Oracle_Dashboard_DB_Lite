@@ -3,7 +3,7 @@ import { executeQuery } from '../server.js';
 import Table from './Table.astro';
 
 const sessionCookie = Astro.cookies.get('db_session')?.json();
-console.log(sessionCookie);
+//console.log(sessionCookie);
 
 let data = [];
 let error = null;
@@ -14,7 +14,7 @@ if (!sessionCookie) {
 }
 
 try {
-    data = await executeQuery('SELECT name, open_mode FROM v$database', sessionCookie);
+    data = await executeQuery('SELECT name, open_mode, log_mode FROM v$database', sessionCookie);
 } catch (e) {
     error = e.message;
 }

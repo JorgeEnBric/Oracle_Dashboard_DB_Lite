@@ -5,6 +5,8 @@ import ActiveEvent from "../components/ActiveEvent.astro";
 import GenerateAWR from "../components/GenerateAWR.astro";
 import Dock from "../components/Dock.astro";
 import Chart from "../components/Chart.astro";
+import InfoSGAPGA from "../components/InfoSGA_PGA.astro";
+import LongSession from "../components/LongSession.astro";
 ---
 
 <!doctype html>
@@ -25,6 +27,8 @@ import Chart from "../components/Chart.astro";
                 <h2>Información de la Base de Datos</h2>
                 <StatusDB />
                 <Chart />
+                <InfoSGAPGA />
+                <LongSession />
             </section>
 
             <!-- El resto inician ocultos -->
@@ -39,7 +43,7 @@ import Chart from "../components/Chart.astro";
             </section>
 
             <section id="awr-tool" class="component hidden-component">
-                <h2>Generador de Reportes AWR</h2>
+                <h2>Generador de Reportes AWR + ADDM</h2>
                 <GenerateAWR />
             </section>
         </div>
