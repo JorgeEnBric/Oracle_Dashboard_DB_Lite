@@ -1,6 +1,6 @@
 ---
 import AwrViewer from './AwrViwer.astro';
-import { executeQuery } from '../server.js';
+import { executeQuery } from '../oracledb.js';
 
 const session = Astro.cookies.get('db_session')?.json();
 

@@ -15,13 +15,23 @@ export async function POST({ request }) {
             connectString: `${host}:${port}/${service}`
         });
         await connection.close();
+
+        const sessionData = JSON.stringify({ usuario, password, host, port, service });
+        console.log("Esta es la informacion de la sesion:", sessionData);
+
         // For session, set a cookie with connection info or token
         // For simplicity, set a cookie
         const response = new Response(null, {
             status: 302,
             headers: { Location: '/dashboard' }
         });
-        response.headers.set('Set-Cookie', `db_session=${JSON.stringify({ usuario, password, host, port, service })}; Path=/; HttpOnly`);
+        //response.headers.set('Set-Cookie', `db_session=${JSON.stringify({ usuario, password, host, port, service })}; Path=/; HttpOnly`);
+        response.headers.append(
+            'Set-Cookie',
+            `db_session=${encodeURIComponent(sessionData)}; Path=/; HttpOnly; SameSite=Strict`
+        );
+       
+       
         return response;
     } catch (err) {
         console.error(err);

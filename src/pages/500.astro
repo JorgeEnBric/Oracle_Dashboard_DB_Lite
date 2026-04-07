@@ -1,0 +1,103 @@
+
+<div class="error-page">
+    <div class="error-background"></div> <div class="error-content">
+      <div class="error-code">500</div>
+      <h1 class="error-title">Error interno del servidor</h1>
+      <p class="error-message">
+        Error interno del servidor: Ocurrió un error inesperado en el servidor
+      </p>
+      <div class="error-actions">
+        <a href="/" class="btn-primary">Volver al Dashboard</a>
+        <a href="javascript:history.back()" class="btn-secondary">Regresar</a>
+      </div>
+    </div>
+  </div>
+
+<style>
+
+    .error-page {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    width: 100%;
+    overflow: hidden;
+    background-color: #0f172a; /* Fondo base oscuro (slate-900) */
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    color: #f1f5f9;
+  }
+
+.error-content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    max-width: 600px;
+    padding: 2rem;
+    background: rgba(15, 23, 42, 0.8); /* Fondo semi-transparente para leer mejor */
+    backdrop-filter: blur(8px); /* Efecto cristal esmerilado */
+    border-radius: 1rem;
+    border: 1px solid rgba(51, 65, 85, 0.5); /* Borde sutil */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+  .error-code {
+    font-size: 8rem;
+    font-weight: 800;
+    line-height: 1;
+    color: #334155; /* Texto muy oscuro (slate-700) */
+    margin-bottom: 1rem;
+    letter-spacing: -0.05em;
+  }
+  .error-title {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 1rem;
+    letter-spacing: -0.025em;
+  }
+  .error-message {
+    font-size: 1.125rem;
+    color: #cbd5e1; /* Texto claro (slate-300) */
+    margin-bottom: 2rem;
+  }
+  
+  .error-message {
+    font-size: 1.125rem;
+    color: #94a3b8; /* Slate-400 */
+    margin-bottom: 2.5rem;
+    line-height: 1.6;
+  }
+
+
+  .error-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+  }
+
+  .btn-primary, .btn-secondary {
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .btn-primary {
+    background-color: #3b82f6; /* Azul primario (blue-500) */
+    color: white;
+  }
+  .btn-primary:hover {
+    background-color: #2563eb;
+  }
+
+  .btn-secondary {
+    background-color: transparent;
+    border: 1px solid #334155;
+    color: #94a3b8;
+  }
+  .btn-secondary:hover {
+    background-color: #1e293b;
+    color: #f1f5f9;
+  }
+</style>
