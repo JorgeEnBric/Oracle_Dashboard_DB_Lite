@@ -1,5 +1,5 @@
 
-import { executeQuery } from '../../server.js';
+import { executeQuery } from '../../oracledb.js';
 
 export async function POST({ request, cookies }) {
   const sessionCookie = cookies.get('db_session')?.json();

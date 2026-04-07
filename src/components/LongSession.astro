@@ -1,5 +1,5 @@
 ---
-import { executeQuery } from '../server.js';
+import { executeQuery } from '../oracledb.js';
 import Table from './Table.astro';
 import  AccionButton  from './AccionButton.astro';
 
@@ -20,7 +20,7 @@ ORDER BY elapsed_seconds DESC
 
 if (!sessionCookie) {
     // Si no hay sesión, redirigimos al login
-    return Astro.redirect('/login');
+    //return Astro.redirect('/login');
 }
 
 try {

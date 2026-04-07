@@ -1,11 +1,11 @@
 ---
 // src/components/ActiveSessionsChart.astro
-import { executeQuery } from '../server.js';
+import { executeQuery } from '../oracledb.js';
 
 const sessionCookie = Astro.cookies.get('db_session')?.json();
 
 if (!sessionCookie) {
-    return Astro.redirect('/login');
+    ///return Astro.redirect('/login');
 }
 
 

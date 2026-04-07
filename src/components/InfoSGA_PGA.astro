@@ -1,5 +1,5 @@
 ---
-import { executeQuery } from '../server.js';
+import { executeQuery } from '../oracledb.js';
 import Table from './Table.astro';
 
 const sessionCookie = Astro.cookies.get('db_session')?.json();
@@ -88,7 +88,7 @@ ORDER BY s.inst_id
 
 if (!sessionCookie) {
     // Si no hay sesión, redirigimos al login
-    return Astro.redirect('/login');
+    ///return Astro.redirect('/login');
 }
 
 try {

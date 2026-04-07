@@ -1,6 +1,6 @@
 // src/pages/api/generate-awr.ts
 import type { APIRoute } from 'astro';
-import { getAWRReport, executeQuery } from '../../server.js';
+import { getAWRReport, executeQuery } from '../../oracledb.js';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
