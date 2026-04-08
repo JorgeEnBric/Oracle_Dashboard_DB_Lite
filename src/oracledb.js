@@ -1,6 +1,6 @@
 
 import oracledb from 'oracledb';
-export async function getAWRReport(bd_id, inst_id, session, bid, eid) {
+export async function getAWRReport(bd_id, session, bid, eid) {
     let connection;
   
     try {
@@ -14,7 +14,7 @@ export async function getAWRReport(bd_id, inst_id, session, bid, eid) {
         
         const sql = `
             SELECT output FROM TABLE(
-                dbms_workload_repository.awr_report_html(${bd_id}, ${inst_id},  :bid, :eid)
+                dbms_workload_repository.awr_global_report_html(${bd_id}, '',  :bid, :eid)
             )`;
 
         const result = await connection.execute(sql, {

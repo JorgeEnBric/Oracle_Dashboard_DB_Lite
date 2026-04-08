@@ -38,7 +38,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const { DBID, INSTANCE_NUMBER } = bd_id?.[0];
 
     // Generar el reporte (operación costosa)
-    const awrData = await getAWRReport(DBID, INSTANCE_NUMBER, session, snapStart, snapEnd);
+    const awrData = await getAWRReport(DBID, session, snapStart, snapEnd);
 
     return new Response(JSON.stringify({ html: awrData }), {
       status: 200,
