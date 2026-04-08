@@ -1,12 +1,14 @@
 ---
-import StatusDB from "../components/StatusDB.astro";
-import AlertLog from "../components/AlertLog.astro";
-import ActiveEvent from "../components/ActiveEvent.astro";
+import StatusDB from "../components/StatusDB.jsx";
+import AlertLog from "../components/AlertLog.jsx";
+import ActiveEvent from "../components/ActiveEvent.jsx";
 import GenerateAWR from "../components/GenerateAWR.astro";
 import Dock from "../components/Dock.astro";
 import Chart from "../components/Chart.astro";
-import InfoSGAPGA from "../components/InfoSGA_PGA.astro";
+import InfoSGAPGA from "../components/InfoSGA_PGA.jsx";
 import LongSession from "../components/LongSession.astro";
+import Contention from "../components/Contention.jsx";
+import Backups from "../components/Bakups.jsx";
 ---
 
 <!doctype html>
@@ -25,26 +27,36 @@ import LongSession from "../components/LongSession.astro";
             <!-- db-info: visible por defecto -->
             <section id="db-info" class="component">
                 <h2>Información de la Base de Datos</h2>
-                <StatusDB />
+                <StatusDB client:visible/>
                 <Chart />
-                <InfoSGAPGA />
+                <InfoSGAPGA client:visible/>
                 <LongSession />
             </section>
 
             <!-- El resto inician ocultos -->
             <section id="alert-log" class="component hidden-component">
                 <h2>Alert Log</h2>
-                <AlertLog />
+                <AlertLog client:visible/>
+            </section>
+
+            <section id="contention" class="component hidden-component">
+                <h2>Contencion</h2>
+                <Contention client:visible/>
             </section>
 
             <section id="ash" class="component hidden-component">
                 <h2>Active Events & ASH ultima hora</h2>
-                <ActiveEvent />
+                <ActiveEvent client:visible/>
             </section>
 
             <section id="awr-tool" class="component hidden-component">
                 <h2>Generador de Reportes AWR + ADDM</h2>
                 <GenerateAWR />
+            </section>
+
+            <section id="backups" class="component hidden-component">
+                <h2>Backups</h2>
+                <Backups client:visible/>
             </section>
         </div>
 

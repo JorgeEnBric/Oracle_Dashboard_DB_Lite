@@ -1,51 +1,4 @@
----
-// src/components/Table.astro
-interface Props {
-  data: any[];
-  title?: string;
-}
-
-const { data, title } = Astro.props;
-
-// Validamos que data sea un array y tenga contenido
-const hasData = Array.isArray(data) && data.length > 0;
-// Obtenemos los encabezados de las llaves del primer objeto
-const headers = hasData ? Object.keys(data[0]) : [];
----
-
-<div class="table-container">
-  {title && <h3 class="table-title">{title}</h3>}
-  
-  {hasData ? (
-    <div class="scroll-wrapper">
-      <table>
-        <thead>
-          <tr>
-            {headers.map((header) => (
-              <th>{header}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((row) => (
-            <tr>
-              {Object.values(row).map((value) => (
-                <td>{value?.toString() ?? <span class="null-value">NULL</span>}</td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  ) : (
-    <div class="empty-state">
-      <p>No hay registros disponibles para mostrar.</p>
-    </div>
-  )}
-</div>
-
-<style>
-  /* Cabeceras de Tabla */
+ /* Cabeceras de Tabla */
 th {
   background-color: #2d3748; /* Un gris un poco más claro que el fondo */
   color: #63b3ed; /* Texto azul para los headers */
@@ -116,4 +69,3 @@ tr:nth-child(even) {
   background-color: #2d3748;
   transition: background 0.2s ease;
 }
-</style>
