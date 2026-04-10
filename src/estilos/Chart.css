@@ -1,3 +1,4 @@
+/* src/components/Chart.css */
 
 .chart-card {
     background-color: #1a1d26;
@@ -6,8 +7,7 @@
     padding: 1.5rem;
     width: 100%;
     margin-bottom: 2rem;
-    max-width: 2000px; /* O el ancho máximo que desees */
-    
+    max-width: 2000px;
 }
 
 .chart-header {
@@ -16,33 +16,96 @@
     align-items: center;
     margin-bottom: 0.5rem;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 1rem;
+    border-bottom: 1px solid #1e293b;
+    padding-bottom: 15px;
+}
+
+/* Agrupador para Título y Tabs de Modo */
+.header-controls-group {
+    display: flex;
+    align-items: center;
+    gap: 20px;
 }
 
 .chart-header h3 {
     color: #e2e8f0;
     margin: 0;
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: 600;
     border-left: 4px solid #3b82f6;
     padding-left: 0.75rem;
 }
 
+/* --- ESTILO PARA BOTONES LIVE / HISTÓRICO --- */
+.mode-selector {
+    display: flex;
+    background-color: #0f172a;
+    padding: 3px;
+    border-radius: 8px;
+    border: 1px solid #334155;
+}
+
+.mode-selector button {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.mode-selector button:hover {
+    color: #f8fafc;
+}
+
+.mode-selector button.active {
+    background-color: #3b82f6;
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* --- CONTROLES (SELECTORS, DATEPICKER) --- */
 .chart-controls {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.8rem;
     flex-wrap: wrap;
 }
 
+.time-select, 
+.custom-datepicker {
+    background: #1e293b;
+    color: #e2e8f0;
+    border: 1px solid #334155;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.time-select:hover, 
+.custom-datepicker:hover {
+    border-color: #475569;
+}
+
+/* --- INFORMACIÓN Y BADGES --- */
 .range-info {
-    color: #64748b;
-    font-size: 0.75rem;
+    color: #94a3b8;
+    font-size: 0.8rem;
     background: rgba(100, 116, 139, 0.1);
-    padding: 3px 10px;
+    padding: 4px 12px;
     border-radius: 6px;
     border: 1px solid #334155;
     font-variant-numeric: tabular-nums;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .status-badge {
@@ -62,14 +125,18 @@
     50%       { opacity: 0.5; }
 }
 
+/* --- BOTONES DE ACCIÓN --- */
 .refresh-btn,
 .reset-btn {
     border-radius: 6px;
-    padding: 4px 12px;
-    font-size: 0.8rem;
+    padding: 6px 12px;
+    font-size: 0.85rem;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.2s;
     border: 1px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .refresh-btn {
@@ -80,6 +147,7 @@
 
 .refresh-btn:hover:not(:disabled) {
     background: rgba(59, 130, 246, 0.2);
+    border-color: #3b82f6;
 }
 
 .reset-btn {
@@ -90,31 +158,30 @@
 
 .reset-btn:hover {
     background: rgba(100, 116, 139, 0.2);
+    border-color: #94a3b8;
 }
 
-.refresh-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+/* --- CONTENEDOR DEL GRÁFICO --- */
+.chart-container {
+    height: 550px;
+    position: relative;
+    margin-top: 1.5rem;
 }
 
 .chart-hint {
     color: #475569;
     font-size: 0.72rem;
-    margin: 0 0 1rem 0;
-    padding-left: 0.25rem;
+    margin: 10px 0;
+    font-style: italic;
 }
 
-.chart-container {
-    height: 550px;
-    position: relative;
-}
-
+/* --- ESTADOS DE CARGA / ERROR --- */
 .chart-error,
 .chart-empty {
-    padding: 2rem;
+    padding: 3rem;
     text-align: center;
     border-radius: 8px;
-    font-size: 0.9rem;
+    margin-top: 2rem;
 }
 
 .chart-error {
@@ -127,24 +194,4 @@
     background: rgba(100, 116, 139, 0.08);
     color: #64748b;
     border: 1px dashed #334155;
-}
-
-.time-select {
-    background: #1e293b;
-    color: #94a3b8;
-    border: 1px solid #334155;
-    border-radius: 4px;
-    padding: 4px 8px;
-    font-size: 12px;
-    outline: none;
-    cursor: pointer;
-}
-
-.time-select:hover {
-    border-color: #475569;
-}
-
-.time-select:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
 }

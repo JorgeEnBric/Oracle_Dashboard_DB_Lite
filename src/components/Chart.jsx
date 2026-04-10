@@ -3,10 +3,13 @@ import '../estilos/Chart.css';
 import { useState, useEffect, useRef } from 'react';
 import { Chart, registerables } from 'chart.js';
 import zoomPlugin from 'chartjs-plugin-zoom';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
 
 Chart.register(...registerables, zoomPlugin);
 
 const COLOR_MAP = {
+    'CPU':            '#3b82f6', // Mapeado desde NVL en SQL
     'CPU/Other':      '#3b82f6',
     'User I/O':       '#f59e0b',
     'System I/O':     '#8b5cf6',
@@ -35,7 +38,6 @@ function procesarDatos(rawData) {
         tiposSet.add(row.TIPO);
     }
 
-    // Orden ascendente para que el tiempo fluya de izquierda a derecha
     const labels = Array.from(labelsSet).sort();
     const tipos  = Array.from(tiposSet).sort();
 
@@ -61,24 +63,17 @@ function procesarDatos(rawData) {
     return { labels, datasets };
 }
 
-function calcularTicksPor30Min(labels) {
-    if (labels.length < 2) return 30;
-    const [h1, m1] = labels[0].split(':').map(Number);
-    const [h2, m2] = labels[1].split(':').map(Number);
-    const diffMin  = Math.abs((h2 * 60 + m2) - (h1 * 60 + m1));
-    if (diffMin === 0) return 30;
-    return Math.round(30 / diffMin);
-}
-
 export default function ActiveSessionsChart() {
     const [error,      setError]      = useState(null);
     const [loading,    setLoading]    = useState(true);
     const [refreshing, setRefreshing] = useState(false);
-    const [isPanning,  setIsPanning]  = useState(false);
     const [rangeInfo,  setRangeInfo]  = useState('');
     
-    // Estado para controlar el rango de tiempo seleccionado
+    // --- NUEVOS ESTADOS PARA CONVIVENCIA ---
+    const [mode, setMode] = useState('live'); // 'live' o 'history'
     const [lookbackHours, setLookbackHours] = useState(1);
+    const [dateRange, setDateRange] = useState([null, null]);
+    const [startDate, endDate] = dateRange;
 
     const canvasRef = useRef(null);
     const chartRef  = useRef(null);
@@ -91,40 +86,52 @@ export default function ActiveSessionsChart() {
         const labels = labelsRef.current;
         const minLabel = labels[Math.max(0, Math.round(min))];
         const maxLabel = labels[Math.min(labels.length - 1, Math.round(max))];
-        if (minLabel && maxLabel) {
-            setRangeInfo(`${minLabel} — ${maxLabel}`);
-        }
+        if (minLabel && maxLabel) setRangeInfo(`${minLabel} — ${maxLabel}`);
     }
+    const formatOracleDate = (date, isEndOfDay = false) => {
+    if (!date) return null;
+    const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const mins = String(date.getMinutes()).padStart(2, '0');
+    const time = isEndOfDay ? "23:59" : "00:00";
+    
+ 
+    return `${day}-${month}-${year} ${time}`;
+    };
 
-    async function cargar(isRefresh = false, hoursOverride) {
-        const hours = hoursOverride || lookbackHours;
+    async function cargar(isRefresh = false) {
         isRefresh ? setRefreshing(true) : setLoading(true);
         setError(null);
 
-        try {
-            // Se envía el parámetro 'h' al endpoint modificado
-            const res  = await fetch(`/api/query?q=active_sessions_chart&h=${hours}`);
-            const json = await res.json();
+        let url = `/api/query?q=active_sessions_chart`;
+        
+        // Lógica de parámetros según modo
+        if (mode === 'live') {
+            url += `&h=${lookbackHours}`;
+        } else if (startDate && endDate) {
+        // Formateamos aquí antes de enviar
+        const startStr = formatOracleDate(startDate, false); // 00:00
+        const endStr = formatOracleDate(endDate, true);      // 23:59
+        console.log('Fechas formateadas para Oracle:', { startStr, endStr });
+        url += `&start=${encodeURIComponent(startStr)}&end=${encodeURIComponent(endStr)}`;
+    }
 
+        try {
+            const res  = await fetch(url);
+            const json = await res.json();
             if (json.error) { setError(json.error); return; }
 
             const { labels, datasets } = procesarDatos(json);
             labelsRef.current = labels;
-            const ticksPor30Min = calcularTicksPor30Min(labels);
 
             if (chartRef.current) {
-                // Actualizar datos
                 chartRef.current.data.labels   = labels;
                 chartRef.current.data.datasets = datasets;
-                
-                // Actualizar límites de zoom para el nuevo rango de datos
                 chartRef.current.options.plugins.zoom.limits.x.max = labels.length - 1;
                 chartRef.current.options.plugins.zoom.pan.rangeMax.x = labels.length - 1;
-                
-                // Ajustar vista inicial (últimos 30 min) y refrescar
-                chartRef.current.options.scales.x.min = Math.max(0, labels.length - ticksPor30Min);
-                chartRef.current.options.scales.x.max = labels.length - 1;
-                
                 chartRef.current.resetZoom();
                 chartRef.current.update();
                 actualizarRangeInfo();
@@ -132,78 +139,25 @@ export default function ActiveSessionsChart() {
             }
 
             const ctx = canvasRef.current;
-            if (!ctx) return;
-
             chartRef.current = new Chart(ctx, {
                 type: 'bar',
                 data: { labels, datasets },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
                     plugins: {
-                        legend: {
-                            display: true,
-                            position: 'bottom',
-                            labels: { color: '#94a3b8', boxWidth: 12, padding: 16, font: { size: 11 } },
-                        },
-                        tooltip: {
-                            backgroundColor: '#1e293b',
-                            borderColor: '#334155',
-                            borderWidth: 1,
-                            titleColor: '#e2e8f0',
-                            bodyColor: '#94a3b8',
-                            callbacks: {
-                                footer: (items) => `Total: ${items.reduce((sum, i) => sum + i.parsed.y, 0)} sesiones`
-                            }
-                        },
+                        legend: { position: 'bottom', labels: { color: '#94a3b8' } },
                         zoom: {
-                            pan: {
-                                enabled: true,
-                                mode: 'x',
-                                speed: 5,
-                                threshold: 5,
-                                rangeMin: { x: 0 },
-                                rangeMax: { x: labels.length - 1 },
-                                onPanStart: () => setIsPanning(true),
-                                onPanComplete: () => {
-                                    setIsPanning(false);
-                                    actualizarRangeInfo();
-                                },
-                            },
-                            zoom: {
-                                wheel: { enabled: true },
-                                pinch: { enabled: true },
-                                mode: 'x',
-                                onZoomComplete: () => actualizarRangeInfo(),
-                            },
-                            limits: {
-                                x: {
-                                    min: 0,
-                                    max: labels.length - 1,
-                                    minRange: ticksPor30Min,
-                                }
-                            }
-                        },
+                            pan: { enabled: true, mode: 'x', rangeMin: { x: 0 }, rangeMax: { x: labels.length - 1 } },
+                            zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' },
+                            limits: { x: { min: 0, max: labels.length - 1 } }
+                        }
                     },
                     scales: {
-                        x: {
-                            stacked: true,
-                            grid: { display: false },
-                            ticks: { color: '#94a3b8', maxRotation: 45, font: { size: 10 }, maxTicksLimit: 12 },
-                            title: { display: true, text: 'Hora (HH:MM)', color: '#64748b', font: { size: 11 } },
-                            min: Math.max(0, labels.length - ticksPor30Min),
-                            max: labels.length - 1,
-                        },
-                        y: {
-                            stacked: true,
-                            beginAtZero: true,
-                            grid: { color: 'rgba(255,255,255,0.05)' },
-                            ticks: { color: '#94a3b8', font: { size: 11 } },
-                            title: { display: true, text: 'Sesiones', color: '#64748b', font: { size: 11 } },
-                        },
-                    },
-                },
+                        x: { stacked: true, ticks: { color: '#94a3b8', autoSkip: true, maxTicksLimit: 8 } },
+                        y: { stacked: true, beginAtZero: true, ticks: { color: '#94a3b8' } }
+                    }
+                }
             });
             actualizarRangeInfo();
         } catch (e) {
@@ -214,83 +168,63 @@ export default function ActiveSessionsChart() {
         }
     }
 
-    const handleHoursChange = (e) => {
-        const val = Number(e.target.value);
-        setLookbackHours(val);
-        cargar(true, val);
-    };
-
-    function resetZoom() {
-        if (chartRef.current) {
-            chartRef.current.resetZoom();
-            actualizarRangeInfo();
-        }
-    }
-
     useEffect(() => {
-        cargar();
-        return () => {
-            if (chartRef.current) {
-                chartRef.current.destroy();
-                chartRef.current = null;
-            }
-        };
-    }, []);
+        if (mode === 'live' || (mode === 'history' && startDate && endDate)) {
+            cargar();
+        }
+    }, [mode, lookbackHours, endDate]);
 
     return (
         <div className="chart-card">
             <div className="chart-header">
-                <h3>Sesiones Activas</h3>
+                <div className="header-controls-group">
+                    <h3>Sesiones Activas</h3>
+                    {/* Tabs de Modo */}
+                    <div className="mode-selector">
+                        <button className={mode === 'live' ? 'active' : ''} onClick={() => setMode('live')}>Live</button>
+                        <button className={mode === 'history' ? 'active' : ''} onClick={() => setMode('history')}>Histórico</button>
+                    </div>
+                </div>
+
                 <div className="chart-controls">
-                    {/* Selector de ventana de tiempo */}
-                    <select 
-                        className="time-select" 
-                        value={lookbackHours} 
-                        onChange={handleHoursChange}
-                        disabled={loading || refreshing}
-                    >
-                        <option value={1}>Última hora</option>
-                        <option value={2}>Últimas 2h</option>
-                        <option value={6}>Últimas 6h</option>
-                        <option value={8}>Últimas 8h</option>
-                        <option value={12}>Últimas 12h</option>
-                        <option value={24}>Últimas 24h</option>
-                    </select>
+                    {mode === 'live' ? (
+                        <select 
+                            className="time-select" 
+                            value={lookbackHours} 
+                            onChange={(e) => setLookbackHours(Number(e.target.value))}
+                        >
+                            <option value={1}>Última hora</option>
+                            <option value={6}>6 Horas</option>
+                            <option value={12}>12 Horas</option>
+                            <option value={24}>24 Horas</option>
+                        </select>
+                    ) : (
+                        <div className="datepicker-wrapper">
+                            <DatePicker
+                                selectsRange={true}
+                                startDate={startDate}
+                                endDate={endDate}
+                                onChange={(update) => setDateRange(update)}
+                                maxDate={new Date()}
+                                placeholderText="Seleccionar rango"
+                                className="custom-datepicker"
+                                filterDate={(d) => {
+                                    if (!startDate || endDate) return true;
+                                    return Math.abs(d - startDate) <= 8 * 24 * 60 * 60 * 1000;
+                                }}
+                            />
+                        </div>
+                    )}
 
                     {rangeInfo && <span className="range-info">🕐 {rangeInfo}</span>}
                     
-                    <button className="reset-btn" onClick={resetZoom} title="Ver rango completo">
-                        ⊡ Reset
+                    <button className="refresh-btn" onClick={() => cargar(true)} disabled={refreshing}>
+                        {refreshing ? '...' : '⟳'}
                     </button>
-                    <button 
-                        className="refresh-btn" 
-                        onClick={() => cargar(true)} 
-                        disabled={refreshing || loading}
-                    >
-                        {refreshing ? '⟳...' : '⟳ Refresh'}
-                    </button>
-                    <span className="status-badge">● Live</span>
                 </div>
             </div>
 
-            {!loading && !error && (
-                <p className="chart-hint">
-                    🖱 Arrastra para navegar · Scroll para zoom · Vista: últimos 30 min
-                </p>
-            )}
-
-            {loading && <div className="chart-empty">Cargando datos...</div>}
-            {error && !loading && (
-                <div className="chart-error">⚠ Error al cargar datos: {error}</div>
-            )}
-
-            <div
-                className="chart-container"
-                style={{
-                    display: loading || error ? 'none' : 'block',
-                    cursor: isPanning ? 'grabbing' : 'grab',
-                }}
-            >
+            <div className="chart-container" style={{ height: '550px' }}>
                 <canvas ref={canvasRef}></canvas>
             </div>
         </div>

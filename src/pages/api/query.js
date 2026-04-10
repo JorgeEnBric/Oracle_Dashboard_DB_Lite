@@ -7,14 +7,16 @@ import { executeQuery } from '../../oracledb.js';
 // Agrega aquí todas tus queries con un nombre clave
 const QUERIES = {
     active_sessions_chart: `
-    SELECT 
-        TO_CHAR(SAMPLE_TIME, 'HH24:MI') AS TIEMPO,
-        NVL(WAIT_CLASS, 'CPU_ON')    AS TIPO,
-        COUNT(*)                         AS SESIONES
+SELECT 
+        TO_CHAR(SAMPLE_TIME, 'DD-MON HH24:MI', 'NLS_DATE_LANGUAGE = AMERICAN') AS TIEMPO,
+        NVL(WAIT_CLASS, 'CPU')                                                 AS TIPO,
+        COUNT(*)                                                               AS SESIONES
     FROM V$ACTIVE_SESSION_HISTORY
-    WHERE SAMPLE_TIME >= SYSDATE - (:hours / 24)
-    GROUP BY TO_CHAR(SAMPLE_TIME, 'HH24:MI'), NVL(WAIT_CLASS, 'CPU/Other')
-    ORDER BY 1 ASC, 2
+    WHERE (:isRelative = 1 AND SAMPLE_TIME >= SYSDATE - (:hours / 24))
+       OR (:isRelative = 0 AND SAMPLE_TIME BETWEEN TO_DATE(:fStart, 'DD-MON-YYYY HH24:MI', 'NLS_DATE_LANGUAGE = AMERICAN') 
+                                               AND TO_DATE(:fEnd, 'DD-MON-YYYY HH24:MI', 'NLS_DATE_LANGUAGE = AMERICAN'))
+    GROUP BY TO_CHAR(SAMPLE_TIME, 'DD-MON HH24:MI', 'NLS_DATE_LANGUAGE = AMERICAN'), NVL(WAIT_CLASS, 'CPU')
+    ORDER BY MIN(SAMPLE_TIME) ASC
     `,
     alertlog: `
         SELECT originating_timestamp, message_text 
@@ -179,7 +181,7 @@ backups: `SELECT
 `
 };
 
-export async function GET({ cookies, url }) {
+/* export async function GET({ cookies, url }) {
     const session = cookies.get('db_session')?.json();
     if (!session) {
         return new Response(JSON.stringify({ error: 'Sin sesión' }), { status: 401 });
@@ -207,4 +209,39 @@ export async function GET({ cookies, url }) {
     } catch (e) {
         return new Response(JSON.stringify({ error: e.message }), { status: 500 });
     }
+} */
+
+
+export async function GET({ cookies, url }) {
+
+
+    
+
+    const session = cookies.get('db_session')?.json();
+    const queryName = url.searchParams.get('q');
+    
+    // Parámetros de la URL
+    const hours = url.searchParams.get('h');
+    const start = url.searchParams.get('start');
+    const end = url.searchParams.get('end');
+
+    if (queryName === 'active_sessions_chart') {
+            try {
+        const binds = {
+            isRelative: start && end ? 0 : 1,
+            hours: Number(hours || 1),
+            fStart: start || '01-JAN-2026 00:00', // default dummy
+            fEnd: end || '01-JAN-2026 00:00'     // default dummy
+        };
+
+        const data = await executeQuery(QUERIES[queryName], session, binds);
+        return new Response(JSON.stringify(data), { status: 200 });
+    } catch (e) {
+        return new Response(JSON.stringify({ error: e.message }), { status: 500 });
+    }
+    } else {
+        const data = await executeQuery(QUERIES[queryName], session);
+        return new Response(JSON.stringify(data), { status: 200 });
+        }
+    
 }
