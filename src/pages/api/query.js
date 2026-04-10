@@ -1,9 +1,21 @@
 // src/pages/api/query.js
-import contention from '../../components/Contention.jsx';
+//import contention from '../../components/Contention.jsx';
 import { executeQuery } from '../../oracledb.js';
+
+
 
 // Agrega aquí todas tus queries con un nombre clave
 const QUERIES = {
+    active_sessions_chart: `
+    SELECT 
+        TO_CHAR(SAMPLE_TIME, 'HH24:MI') AS TIEMPO,
+        NVL(WAIT_CLASS, 'CPU_ON')    AS TIPO,
+        COUNT(*)                         AS SESIONES
+    FROM V$ACTIVE_SESSION_HISTORY
+    WHERE SAMPLE_TIME >= SYSDATE - (:hours / 24)
+    GROUP BY TO_CHAR(SAMPLE_TIME, 'HH24:MI'), NVL(WAIT_CLASS, 'CPU/Other')
+    ORDER BY 1 ASC, 2
+    `,
     alertlog: `
         SELECT originating_timestamp, message_text 
         FROM v$diag_alert_ext 
@@ -165,41 +177,34 @@ backups: `SELECT
     WHERE
         r.start_time > sysdate - 15
 `
-
 };
 
 export async function GET({ cookies, url }) {
-    // Leer sesión Oracle desde la cookie
     const session = cookies.get('db_session')?.json();
-
     if (!session) {
-        return new Response(JSON.stringify({ error: 'Sin sesión' }), {
-            status: 401,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        return new Response(JSON.stringify({ error: 'Sin sesión' }), { status: 401 });
     }
 
-    // Leer el parámetro ?q=alertlog
     const queryName = url.searchParams.get('q');
+    const hours = url.searchParams.get('h') || 1; // Captura el valor del select del Chart
 
     if (!queryName || !QUERIES[queryName]) {
-        return new Response(JSON.stringify({ error: `Query '${queryName}' no encontrada` }), {
-            status: 400,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        return new Response(JSON.stringify({ error: `Query '${queryName}' no encontrada` }), { status: 400 });
     }
 
     try {
-        const data = await executeQuery(QUERIES[queryName], session);
-        return new Response(JSON.stringify(data), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        // Preparamos los binds (parámetros)
+        const binds = {};
+        if (queryName === 'active_sessions_chart') {
+            binds.hours = Number(hours);
+        }
+
+        // Llamamos a la función actualizada con 3 argumentos
+
+        const data = await executeQuery(QUERIES[queryName], session, binds);
+        
+        return new Response(JSON.stringify(data), { status: 200 });
     } catch (e) {
-        console.error(`Error ejecutando query '${queryName}':`, e.message);
-        return new Response(JSON.stringify({ error: e.message }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        return new Response(JSON.stringify({ error: e.message }), { status: 500 });
     }
 }
