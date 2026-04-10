@@ -194,9 +194,9 @@ export default function ActiveSessionsChart() {
                             onChange={(e) => setLookbackHours(Number(e.target.value))}
                         >
                             <option value={1}>Última hora</option>
+                            <option value={2}>2 Horas</option>
                             <option value={6}>6 Horas</option>
                             <option value={12}>12 Horas</option>
-                            <option value={24}>24 Horas</option>
                         </select>
                     ) : (
                         <div className="datepicker-wrapper">

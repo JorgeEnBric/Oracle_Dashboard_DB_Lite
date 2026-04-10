@@ -7,16 +7,28 @@ import { executeQuery } from '../../oracledb.js';
 // Agrega aquí todas tus queries con un nombre clave
 const QUERIES = {
     active_sessions_chart: `
-SELECT 
-        TO_CHAR(SAMPLE_TIME, 'DD-MON HH24:MI', 'NLS_DATE_LANGUAGE = AMERICAN') AS TIEMPO,
-        NVL(WAIT_CLASS, 'CPU')                                                 AS TIPO,
-        COUNT(*)                                                               AS SESIONES
-    FROM V$ACTIVE_SESSION_HISTORY
-    WHERE (:isRelative = 1 AND SAMPLE_TIME >= SYSDATE - (:hours / 24))
-       OR (:isRelative = 0 AND SAMPLE_TIME BETWEEN TO_DATE(:fStart, 'DD-MON-YYYY HH24:MI', 'NLS_DATE_LANGUAGE = AMERICAN') 
-                                               AND TO_DATE(:fEnd, 'DD-MON-YYYY HH24:MI', 'NLS_DATE_LANGUAGE = AMERICAN'))
-    GROUP BY TO_CHAR(SAMPLE_TIME, 'DD-MON HH24:MI', 'NLS_DATE_LANGUAGE = AMERICAN'), NVL(WAIT_CLASS, 'CPU')
-    ORDER BY MIN(SAMPLE_TIME) ASC
+            SELECT 
+                TO_CHAR(SAMPLE_TIME, 'DD-MON HH24:MI', 'NLS_DATE_LANGUAGE = AMERICAN') AS TIEMPO,
+                NVL(WAIT_CLASS, 'CPU_ON')                                                 AS TIPO,
+                COUNT(*)                                                               AS SESIONES
+            FROM (
+                -- Casos donde isRelative es 1: Usamos la vista en vivo (ASH)
+                SELECT SAMPLE_TIME, WAIT_CLASS
+                FROM V$ACTIVE_SESSION_HISTORY
+                WHERE :isRelative = 1 
+                AND SAMPLE_TIME >= SYSDATE - (:hours / 24)
+
+                UNION ALL
+
+                -- Casos donde isRelative es 0: Usamos la vista histórica (AWR)
+                SELECT SAMPLE_TIME, WAIT_CLASS
+                FROM DBA_HIST_ACTIVE_SESS_HISTORY
+                WHERE :isRelative = 0 
+                AND SAMPLE_TIME BETWEEN TO_DATE(:fStart, 'DD-MON-YYYY HH24:MI', 'NLS_DATE_LANGUAGE = AMERICAN') 
+                                    AND TO_DATE(:fEnd, 'DD-MON-YYYY HH24:MI', 'NLS_DATE_LANGUAGE = AMERICAN')
+            )
+            GROUP BY TO_CHAR(SAMPLE_TIME, 'DD-MON HH24:MI', 'NLS_DATE_LANGUAGE = AMERICAN'), NVL(WAIT_CLASS, 'CPU_ON')
+            ORDER BY MIN(SAMPLE_TIME) ASC
     `,
     alertlog: `
         SELECT originating_timestamp, message_text 
