@@ -1,6 +1,7 @@
 // src/components/ActiveEvents.jsx
 import { useState, useEffect } from 'react';
 import Table from './Table.jsx';
+import AccionTable from './AccionTable.jsx';
 
 export default function ActiveEvents() {
     const [data, setData]       = useState([]);
@@ -13,7 +14,7 @@ export default function ActiveEvents() {
             try {
                 const [res1, res2] = await Promise.all([
                     fetch('/api/query?q=eventos_activos'),
-                    fetch('/api/query?q=ash')
+                    fetch('/api/query?q=sesiones_activas')
                 ]);
 
                 const json1 = await res1.json();
@@ -40,7 +41,7 @@ export default function ActiveEvents() {
     return (
         <div className="activeevent-zone">
             <Table data={data}  title="Eventos Activos" />
-            <Table data={data2} title="Active Session History (última hora)" />
+            <AccionTable data={data2} title="Sesiones Activas" accion="Kill session" />
         </div>
     );
 }

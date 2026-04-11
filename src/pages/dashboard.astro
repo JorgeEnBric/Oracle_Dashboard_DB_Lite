@@ -4,7 +4,7 @@ import AlertLog from "../components/AlertLog.jsx";
 import ActiveEvent from "../components/ActiveEvent.jsx";
 import GenerateAWR from "../components/GenerateAWR.astro";
 import Dock from "../components/Dock.astro";
-import Chart from "../components/Chart.jsx";
+import PerformanceHub from "../components/PerformanceHub.jsx";
 import InfoSGAPGA from "../components/InfoSGA_PGA.jsx";
 import LongSession from "../components/LongSession.astro";
 import Contention from "../components/Contention.jsx";
@@ -28,7 +28,7 @@ import Backups from "../components/Bakups.jsx";
             <section id="db-info" class="component">
                 <h2>Información de la Base de Datos</h2>
                 <StatusDB client:visible/>
-                <Chart client:only/>
+                <PerformanceHub client:only/>
                 <InfoSGAPGA client:visible/>
                 <LongSession />
             </section>
@@ -45,7 +45,7 @@ import Backups from "../components/Bakups.jsx";
             </section>
 
             <section id="ash" class="component hidden-component">
-                <h2>Active Events & ASH ultima hora</h2>
+                <h2>Active Events & Sessions</h2>
                 <ActiveEvent client:visible/>
             </section>
 

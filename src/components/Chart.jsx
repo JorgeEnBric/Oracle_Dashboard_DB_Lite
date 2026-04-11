@@ -9,7 +9,7 @@ import "react-datepicker/dist/react-datepicker.css";
 Chart.register(...registerables, zoomPlugin);
 
 const COLOR_MAP = {
-    'CPU':            '#3b82f6', // Mapeado desde NVL en SQL
+    'CPU':            '#3b82f6',
     'CPU/Other':      '#3b82f6',
     'User I/O':       '#f59e0b',
     'System I/O':     '#8b5cf6',
@@ -63,13 +63,12 @@ function procesarDatos(rawData) {
     return { labels, datasets };
 }
 
-export default function ActiveSessionsChart() {
+export default function ActiveSessionsChart({ onParamsChange }) {
     const [error,      setError]      = useState(null);
     const [loading,    setLoading]    = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [rangeInfo,  setRangeInfo]  = useState('');
     
-    // --- NUEVOS ESTADOS PARA CONVIVENCIA ---
     const [mode, setMode] = useState('live'); // 'live' o 'history'
     const [lookbackHours, setLookbackHours] = useState(1);
     const [dateRange, setDateRange] = useState([null, null]);
@@ -88,41 +87,60 @@ export default function ActiveSessionsChart() {
         const maxLabel = labels[Math.min(labels.length - 1, Math.round(max))];
         if (minLabel && maxLabel) setRangeInfo(`${minLabel} — ${maxLabel}`);
     }
+
     const formatOracleDate = (date, isEndOfDay = false) => {
-    if (!date) return null;
-    const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = months[date.getMonth()];
-    const year = date.getFullYear();
-    const hours = String(date.getHours()).padStart(2, '0');
-    const mins = String(date.getMinutes()).padStart(2, '0');
-    const time = isEndOfDay ? "23:59" : "00:00";
-    
- 
-    return `${day}-${month}-${year} ${time}`;
+        if (!date) return null;
+        const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = months[date.getMonth()];
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const mins = String(date.getMinutes()).padStart(2, '0');
+        
+        // Si es fin de día, forzamos 23:59, de lo contrario usamos la hora seleccionada
+        const time = isEndOfDay ? "23:59" : `${hours}:${mins}`;
+        
+        return `${day}-${month}-${year} ${time}`;
     };
 
     async function cargar(isRefresh = false) {
         isRefresh ? setRefreshing(true) : setLoading(true);
         setError(null);
 
-        let url = `/api/query?q=active_sessions_chart`;
+        // 1. Construir objeto de parámetros para emitir al padre
+        const currentParams = {
+            isRelative: mode === 'live' ? 1 : 0,
+            hours: mode === 'live' ? lookbackHours : null,
+            fStart: mode === 'history' ? formatOracleDate(startDate, false) : null,
+            fEnd: mode === 'history' ? formatOracleDate(endDate, true) : null
+        };
+
+        // Si estamos en modo historia pero faltan fechas, no disparamos peticiones
+        if (mode === 'history' && (!startDate || !endDate)) {
+            setLoading(false);
+            return;
+        }
+
+        // 2. Notificar al componente padre de los nuevos parámetros
+        if (onParamsChange) {
+            onParamsChange(currentParams);
+        }
+
+        // 3. Preparar la URL para el query del Gráfico
+        let url = `/api/query?q=active_sessions_chart&isRelative=${currentParams.isRelative}`;
         
-        // Lógica de parámetros según modo
-        if (mode === 'live') {
-            url += `&h=${lookbackHours}`;
-        } else if (startDate && endDate) {
-        // Formateamos aquí antes de enviar
-        const startStr = formatOracleDate(startDate, false); // 00:00
-        const endStr = formatOracleDate(endDate, true);      // 23:59
-        console.log('Fechas formateadas para Oracle:', { startStr, endStr });
-        url += `&start=${encodeURIComponent(startStr)}&end=${encodeURIComponent(endStr)}`;
-    }
+        if (currentParams.isRelative === 1) {
+            url += `&hours=${currentParams.hours}`;
+        } else {
+            url += `&fStart=${encodeURIComponent(currentParams.fStart)}&fEnd=${encodeURIComponent(currentParams.fEnd)}`;
+        }
 
         try {
             const res  = await fetch(url);
+            console.log("URL solicitada para el gráfico:", url);
             const json = await res.json();
             if (json.error) { setError(json.error); return; }
+            console.log("Datos recibidos para el gráfico:", json);
 
             const { labels, datasets } = procesarDatos(json);
             labelsRef.current = labels;
@@ -168,18 +186,17 @@ export default function ActiveSessionsChart() {
         }
     }
 
+    // Efecto para recargar cuando cambian los filtros principales
     useEffect(() => {
-        if (mode === 'live' || (mode === 'history' && startDate && endDate)) {
-            cargar();
-        }
+        cargar();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mode, lookbackHours, endDate]);
 
     return (
         <div className="chart-card">
             <div className="chart-header">
                 <div className="header-controls-group">
-                    <h3>Sesiones Activas</h3>
-                    {/* Tabs de Modo */}
+                    <h3>Performance Hub</h3>
                     <div className="mode-selector">
                         <button className={mode === 'live' ? 'active' : ''} onClick={() => setMode('live')}>Live</button>
                         <button className={mode === 'history' ? 'active' : ''} onClick={() => setMode('history')}>Histórico</button>
@@ -197,6 +214,7 @@ export default function ActiveSessionsChart() {
                             <option value={2}>2 Horas</option>
                             <option value={6}>6 Horas</option>
                             <option value={12}>12 Horas</option>
+                            <option value={24}>24 Horas</option>
                         </select>
                     ) : (
                         <div className="datepicker-wrapper">
@@ -210,6 +228,7 @@ export default function ActiveSessionsChart() {
                                 className="custom-datepicker"
                                 filterDate={(d) => {
                                     if (!startDate || endDate) return true;
+                                    // Limitar a máximo 8 días por selección
                                     return Math.abs(d - startDate) <= 8 * 24 * 60 * 60 * 1000;
                                 }}
                             />
@@ -218,13 +237,19 @@ export default function ActiveSessionsChart() {
 
                     {rangeInfo && <span className="range-info">🕐 {rangeInfo}</span>}
                     
-                    <button className="refresh-btn" onClick={() => cargar(true)} disabled={refreshing}>
+                    <button className="refresh-btn" onClick={() => cargar(true)} disabled={refreshing || loading}>
                         {refreshing ? '...' : '⟳'}
                     </button>
                 </div>
             </div>
 
-            <div className="chart-container" style={{ height: '550px' }}>
+            <div className="chart-container" style={{ height: '550px', position: 'relative' }}>
+                {loading && !refreshing && (
+                    <div className="loader-overlay">Consultando Oracle ASH...</div>
+                )}
+                {error && (
+                    <div className="error-message">⚠️ {error}</div>
+                )}
                 <canvas ref={canvasRef}></canvas>
             </div>
         </div>
