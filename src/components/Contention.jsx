@@ -1,6 +1,6 @@
 // src/components/AlertLog.jsx
 import { useState, useEffect } from 'react';
-import Table from './Table.jsx';
+import AccionTable from './ActionTable.jsx';
 
 export default function contention() {
     const [data, setData]       = useState([]);
@@ -34,7 +34,7 @@ export default function contention() {
 
     return (
         <div className="contention-zone">
-            <Table data={data} title="Contencion" />
+            <AccionTable data={data} title="Contención" accion="Kill session" />
         </div>
     );
 }

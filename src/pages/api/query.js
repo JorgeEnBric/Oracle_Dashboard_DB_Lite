@@ -97,10 +97,58 @@ const QUERIES = {
         And S.Username is not null
         group by S.event`,
     sesiones_activas: `
-        select s.inst_id, s.username, s.sid, s.serial#,  s.SQL_ID, s.WAIT_CLASS, s.MACHINE, substr(s.PROGRAM, 1, 10) as PROGRAM, substr(sql.SQL_TEXT, 1, 20) as SQL_TEXT from gv$session s 
-    join v$sql sql on s.SQL_ID = sql.SQL_ID
+    select
+    s.inst_id,
+    s.sid,
+    s.serial#,  
+        s.SQL_ID, 
+        s.WAIT_CLASS, 
+        TO_CHAR(TRUNC(s.LAST_CALL_ET/3600),'FM9900') || ':' ||
+        TO_CHAR(TRUNC(MOD(s.LAST_CALL_ET,3600)/60),'FM00') || ':' ||
+        TO_CHAR(MOD(s.LAST_CALL_ET,60),'FM00') AS duration,
+        s.MACHINE, 
+        substr(s.PROGRAM, 1, 15) as PROGRAM, 
+        substr(sql.SQL_TEXT, 1, 40) as SQL_TEXT 
+    FROM gv$session s 
+    LEFT JOIN gv$sql sql 
+        ON s.SQL_ID = sql.SQL_ID 
+        AND s.inst_id = sql.inst_id
+    WHERE s.type != 'BACKGROUND' 
+    AND s.status = 'ACTIVE'
+    ORDER BY s.LAST_CALL_ET DESC
     `,
-    statusdb: `SELECT name, open_mode, log_mode FROM v$database`,
+    statusdb: `
+            SELECT 
+            i.inst_id,
+            d.name AS db_name,
+            -- Identificador del modo activo
+            CASE 
+                WHEN (SELECT TO_NUMBER(VALUE) FROM gv$parameter WHERE name = 'memory_target' AND inst_id = i.inst_id) > 0 THEN 'AMM (Automatic)'
+                WHEN (SELECT TO_NUMBER(VALUE) FROM gv$parameter WHERE name = 'sga_target' AND inst_id = i.inst_id) > 0 THEN 'ASMM (SGA/PGA Target)'
+                ELSE 'MANUAL'
+            END AS memory_mode,
+            -- MEM_TARGET: Solo muestra valor si es > 0
+            NULLIF((SELECT ROUND(VALUE / 1024 / 1024, 2) FROM gv$parameter WHERE name = 'memory_target' AND inst_id = i.inst_id), 0) AS mem_target_mb,
+            -- SGA_TARGET: Solo muestra valor si es > 0
+            NULLIF((SELECT ROUND(VALUE / 1024 / 1024, 2) FROM gv$parameter WHERE name = 'sga_target' AND inst_id = i.inst_id), 0) AS sga_target_mb,
+            -- SGA ACTUAL: Siempre relevante
+            (SELECT ROUND(SUM(value) / 1024 / 1024, 2) FROM gv$sga s WHERE s.inst_id = i.inst_id) AS sga_actual_mb,
+            -- PGA_TARGET: Solo muestra valor si es > 0
+            NULLIF((SELECT ROUND(VALUE / 1024 / 1024, 2) FROM gv$parameter WHERE name = 'pga_aggregate_target' AND inst_id = i.inst_id), 0) AS pga_target_mb,
+            -- PGA ACTUAL: Siempre relevante
+            (SELECT ROUND(value / 1024 / 1024, 2) FROM gv$pgastat p 
+            WHERE p.inst_id = i.inst_id AND p.name = 'total PGA allocated') AS pga_allocated_mb,
+            -- Memoria Física
+            (SELECT ROUND(value / 1024 / 1024, 2) FROM gv$osstat o 
+            WHERE o.inst_id = i.inst_id AND o.STAT_NAME = 'PHYSICAL_MEMORY_BYTES') AS host_mem_mb
+        FROM 
+            gv$database d,
+            gv$instance i
+        WHERE 
+            d.inst_id = i.inst_id
+        ORDER BY 
+            i.inst_id
+    `,
     infoSGA_PGA: `
 WITH pga_actual AS (
     SELECT 
@@ -179,22 +227,21 @@ FROM sga_advice s
 JOIN pga_advice p ON s.inst_id = p.inst_id
 ORDER BY s.inst_id 
 `,
-    contention: `SELECT gvs.inst_id,DECODE (request, 0, 'Holder: ', 'waiter:')|| gvl.sid SESS, gvl.sid, gvs.serial#,
-         status,
+    contention: `
+    SELECT gvs.inst_id,DECODE (request, 0, 'Holder: ', 'waiter:')|| gvl.sid SESS, 
+        gvs.sid as sid,
+        gvs.serial# as serial#,
+        status,
          username,
          event,
          gvs.seconds_in_wait,
          gvl.TYPE, 
-         gvs.SADDR,
-         sql_id,
-        'select inst_id,sid,sql_id,sql_text,LAST_SQL_ACTIVE_TIME,CURSOR_TYPE from gv$open_cursor 
-        where saddr='''||gvs.SADDR||''' and inst_id='||gvs.inst_id||';' SEARCH_CURSORS,
-        'alter system kill session '''||gvs.sid||','||gvs.serial#||',@'||gvs.inst_id||''' immediate;' KILL_SESS
+         sql_id
     FROM gv$lock gvl, gv$session gvs
-   WHERE     (id1, id2, gvl.TYPE) IN (SELECT id1, id2, TYPE
-                                        FROM gv$lock
-                                       WHERE request > 0)
-         AND gvl.sid = gvs.sid and gvl.inst_id=gvs.inst_id
+   WHERE     
+   (id1, id2, gvl.TYPE)  IN (SELECT id1, id2, TYPE FROM gv$lock WHERE request > 0)
+   AND 
+         gvl.sid = gvs.sid and gvl.inst_id=gvs.inst_id
 ORDER BY request
 `,
     backups: `SELECT

@@ -51,7 +51,7 @@ export default function PerformanceHub() {
     };
 
     return (
-        <div className="session-monitor-container" style={{ padding: '20px' }}>
+        <div className="session-monitor-container">
             {/* Componente del Gráfico */}
             <ActiveSessionsChart onParamsChange={handleParamsChange} />
 

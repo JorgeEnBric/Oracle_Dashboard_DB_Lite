@@ -1,7 +1,7 @@
 // src/components/ActiveEvents.jsx
 import { useState, useEffect } from 'react';
 import Table from './Table.jsx';
-import AccionTable from './AccionTable.jsx';
+import AccionTable from './ActionTable.jsx';
 
 export default function ActiveEvents() {
     const [data, setData]       = useState([]);

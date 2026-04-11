@@ -1,20 +1,29 @@
 /* src/components/Chart.css */
 
+/* Tarjeta contenedora del gráfico */
 .chart-card {
     background-color: #1a1d26;
     border: 1px solid #334155;
     border-radius: 12px;
     padding: 1.5rem;
-    width: 100%;
+    
+    /* CAMBIOS AQUÍ para centrado y fluidez */
+    width: 100%;           /* Ocupa todo el ancho disponible */
+    max-width: 100%;       /* Asegura que no se desborde */
+    margin-left: auto;     /* Centrado horizontal automático */
+    margin-right: auto;    /* Centrado horizontal automático */
     margin-bottom: 2rem;
-    max-width: 2000px;
+    
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+    box-sizing: border-box; /* Padding no suma al ancho */
 }
 
+/* Cabecera de la tarjeta del gráfico (título y controles) */
 .chart-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
     flex-wrap: wrap;
     gap: 1rem;
     border-bottom: 1px solid #1e293b;
@@ -28,12 +37,13 @@
     gap: 20px;
 }
 
+/* Título del gráfico */
 .chart-header h3 {
     color: #e2e8f0;
     margin: 0;
     font-size: 1.1rem;
     font-weight: 600;
-    border-left: 4px solid #3b82f6;
+    border-left: 4px solid #3b82f6; /* Azul acento */
     padding-left: 0.75rem;
 }
 
@@ -81,7 +91,7 @@
     background: #1e293b;
     color: #e2e8f0;
     border: 1px solid #334155;
-    padding: 5px 10px;
+    padding: 6px 12px;
     border-radius: 6px;
     font-size: 12px;
     outline: none;
@@ -137,6 +147,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 5px;
 }
 
 .refresh-btn {
@@ -148,6 +159,11 @@
 .refresh-btn:hover:not(:disabled) {
     background: rgba(59, 130, 246, 0.2);
     border-color: #3b82f6;
+}
+
+.refresh-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .reset-btn {
@@ -166,6 +182,7 @@
     height: 550px;
     position: relative;
     margin-top: 1.5rem;
+    width: 100%;
 }
 
 .chart-hint {
@@ -173,15 +190,21 @@
     font-size: 0.72rem;
     margin: 10px 0;
     font-style: italic;
+    text-align: left; /* Alineado a la izquierda */
 }
 
 /* --- ESTADOS DE CARGA / ERROR --- */
 .chart-error,
 .chart-empty {
     padding: 3rem;
-    text-align: center;
+    text-align: left;
     border-radius: 8px;
     margin-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 10px;
 }
 
 .chart-error {
