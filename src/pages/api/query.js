@@ -166,7 +166,7 @@ sga_advice AS (
             WHEN COUNT(CASE WHEN sga_size_factor > 1 
                             AND estd_db_time_factor < 0.95 THEN 1 END) > 0 
             THEN 
-                'MEJORA: Ganancia de rendimiento ajustando desde ' || 
+                'Ganancia de rendimiento ajustando desde ' || 
                 MIN(CASE WHEN sga_size_factor > 1 
                          AND estd_db_time_factor < 0.95 THEN sga_size END) || 
                 ' MB hasta ' || 
@@ -195,7 +195,7 @@ pga_advice AS (
                             AND a.estd_pga_cache_hit_percentage > p.cache_hit_actual
                             AND a.estd_overalloc_count = 0 THEN 1 END) > 0 
             THEN 
-                'MEJORA: Ganancia de rendimiento ajustando desde ' || 
+                'Ganancia de rendimiento ajustando desde ' || 
                 MIN(CASE WHEN a.pga_target_factor > 1 
                          AND a.estd_overalloc_count = 0 THEN 
                          ROUND(a.pga_target_for_estimate/1024/1024, 2) END) || 
@@ -221,8 +221,8 @@ pga_advice AS (
 )
 SELECT
     s.inst_id                                    AS INSTANCIA,
-    'REVISIÓN SGA (Instancia ' || s.inst_id || '): ' || s.advice_sga  AS ADVICE_SGA,
-    'REVISIÓN PGA (Instancia ' || p.inst_id || '): ' || p.advice_pga  AS ADVICE_PGA
+    s.advice_sga  AS ADVICE_SGA,
+    p.advice_pga  AS ADVICE_PGA
 FROM sga_advice s
 JOIN pga_advice p ON s.inst_id = p.inst_id
 ORDER BY s.inst_id 
