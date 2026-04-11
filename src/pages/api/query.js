@@ -1,9 +1,86 @@
 // src/pages/api/query.js
-import contention from '../../components/Contention.jsx';
+//import contention from '../../components/Contention.jsx';
 import { executeQuery } from '../../oracledb.js';
+
+
 
 // Agrega aquí todas tus queries con un nombre clave
 const QUERIES = {
+    active_sessions_chart: `
+            SELECT   
+            TO_CHAR(SAMPLE_TIME, 'DD-MON HH24:MI', 'NLS_DATE_LANGUAGE = AMERICAN') AS TIEMPO,
+                NVL(WAIT_CLASS, 'CPU_ON')                                                 AS TIPO,
+                COUNT(*)                                                               AS SESIONES
+            FROM (
+                -- Casos donde isRelative es 1: Usamos la vista en vivo (ASH)
+                SELECT SAMPLE_TIME, WAIT_CLASS
+                FROM V$ACTIVE_SESSION_HISTORY
+                WHERE :isRelative = 1 
+                AND SAMPLE_TIME >= SYSDATE - (:hours / 24)
+                UNION ALL
+                -- Casos donde isRelative es 0: Usamos la vista histórica (AWR)
+                SELECT SAMPLE_TIME, WAIT_CLASS
+                FROM DBA_HIST_ACTIVE_SESS_HISTORY
+                WHERE :isRelative = 0 
+                AND SAMPLE_TIME BETWEEN TO_DATE(:fStart, 'DD-MON-YYYY HH24:MI', 'NLS_DATE_LANGUAGE = AMERICAN') 
+                                    AND TO_DATE(:fEnd, 'DD-MON-YYYY HH24:MI', 'NLS_DATE_LANGUAGE = AMERICAN')
+            )
+            GROUP BY TO_CHAR(SAMPLE_TIME, 'DD-MON HH24:MI', 'NLS_DATE_LANGUAGE = AMERICAN'), NVL(WAIT_CLASS, 'CPU_ON')
+            ORDER BY MIN(SAMPLE_TIME) ASC
+    `,
+    active_sessions_details: `
+        SELECT 
+        IDENTIFICADOR,
+        SQL_ID,
+        TIEMPO,
+        TIPO,
+        SESIONES_CONCURRENTES,
+        MINUTOS_ACTIVIDAD,
+        SQL_TEXT_SHORT
+    FROM (
+        SELECT 
+            CASE 
+                WHEN FORCE_MATCHING_SIGNATURE = 0 THEN 'Internal/PLSQL'
+                ELSE TO_CHAR(FORCE_MATCHING_SIGNATURE) 
+            END AS IDENTIFICADOR,
+            ash.SQL_ID,
+            TO_CHAR(ash.SAMPLE_TIME, 'DD-MON HH24:MI', 'NLS_DATE_LANGUAGE = AMERICAN') AS TIEMPO,
+            NVL(ash.WAIT_CLASS, 'CPU_ON') AS TIPO,
+            COUNT(*) AS SESIONES_CONCURRENTES,
+            ROUND(SUM(CASE WHEN ORIGEN = 'LIVE' THEN 1 ELSE 10 END) / 60, 2) AS MINUTOS_ACTIVIDAD,
+            MAX(ash.SQL_TEXT_SHORT) AS SQL_TEXT_SHORT
+        FROM (
+            -- Rama LIVE (V$SQL)
+            SELECT a.FORCE_MATCHING_SIGNATURE, a.SQL_ID, a.SAMPLE_TIME, a.WAIT_CLASS, a.USER_ID, 'LIVE' AS ORIGEN,
+                (SELECT CAST(DBMS_LOB.SUBSTR(st.SQL_TEXT, 100, 1) AS VARCHAR2(100)) 
+                    FROM V$SQL st 
+                    WHERE st.SQL_ID = a.SQL_ID AND ROWNUM = 1) AS SQL_TEXT_SHORT
+            FROM V$ACTIVE_SESSION_HISTORY a
+            WHERE :isRelative = 1 AND a.SAMPLE_TIME >= SYSDATE - (:hours / 24)
+            AND a.USER_ID <> 0 
+            AND a.SQL_ID IS NOT NULL
+
+            UNION ALL
+
+            -- Rama HISTÓRICA (DBA_HIST_SQLTEXT)
+            SELECT a.FORCE_MATCHING_SIGNATURE, a.SQL_ID, a.SAMPLE_TIME, a.WAIT_CLASS, a.USER_ID, 'HIST' AS ORIGEN,
+                (SELECT CAST(DBMS_LOB.SUBSTR(st.SQL_TEXT, 100, 1) AS VARCHAR2(100)) 
+                    FROM DBA_HIST_SQLTEXT st 
+                    WHERE st.SQL_ID = a.SQL_ID AND ROWNUM = 1) AS SQL_TEXT_SHORT
+            FROM DBA_HIST_ACTIVE_SESS_HISTORY a
+            WHERE :isRelative = 0 AND a.SAMPLE_TIME BETWEEN TO_DATE(:fStart, 'DD-MON-YYYY HH24:MI', 'NLS_DATE_LANGUAGE = AMERICAN') 
+                                                AND TO_DATE(:fEnd, 'DD-MON-YYYY HH24:MI', 'NLS_DATE_LANGUAGE = AMERICAN')
+            AND a.USER_ID <> 0 
+            AND a.SQL_ID IS NOT NULL
+        ) ash
+        GROUP BY 
+            TO_CHAR(ash.SAMPLE_TIME, 'DD-MON HH24:MI', 'NLS_DATE_LANGUAGE = AMERICAN'), 
+            NVL(ash.WAIT_CLASS, 'CPU_ON'), 
+            FORCE_MATCHING_SIGNATURE,
+            ash.SQL_ID
+    )
+    ORDER BY MINUTOS_ACTIVIDAD, TIEMPO DESC
+    `,
     alertlog: `
         SELECT originating_timestamp, message_text 
         FROM v$diag_alert_ext 
@@ -19,28 +96,12 @@ const QUERIES = {
         And (S.Status = 'ACTIVE')
         And S.Username is not null
         group by S.event`,
-    ash: `
-     SELECT 
-    ash.event,
-    ash.FORCE_MATCHING_SIGNATURE, 
-    ROUND(COUNT(*) / 60, 2) AS ESTIMATED_WAIT_MINUTES,
-    ROUND(SUM(ash.TIME_WAITED) / 1000000 / 60, 2) AS RECORDED_WAIT_MINUTES,
-    COUNT(*) AS SAMPLES,
-    MAX(ash.SQL_ID) AS SQL_ID,
-    MAX(DBMS_LOB.SUBSTR(sq.SQL_TEXT, 100, 1)) AS SQL_TEXT_SHORT
-    FROM gv$active_session_history ash
-    JOIN gv$sqlarea sq 
-        ON  ash.SQL_ID = sq.SQL_ID 
-        AND ash.INST_ID = sq.INST_ID
-    WHERE ash.sample_time > SYSDATE - 1/24 
-    AND ash.FORCE_MATCHING_SIGNATURE > 0
-    AND ash.event IS NOT NULL
-    GROUP BY ash.FORCE_MATCHING_SIGNATURE, ash.event
-    HAVING (COUNT(*) / 60) > 5
-    ORDER BY ESTIMATED_WAIT_MINUTES DESC
+    sesiones_activas: `
+        select s.inst_id, s.username, s.sid, s.serial#,  s.SQL_ID, s.WAIT_CLASS, s.MACHINE, substr(s.PROGRAM, 1, 10) as PROGRAM, substr(sql.SQL_TEXT, 1, 20) as SQL_TEXT from gv$session s 
+    join v$sql sql on s.SQL_ID = sql.SQL_ID
     `,
     statusdb: `SELECT name, open_mode, log_mode FROM v$database`,
-    infoSGA_PGA : `
+    infoSGA_PGA: `
 WITH pga_actual AS (
     SELECT 
         inst_id,
@@ -118,7 +179,7 @@ FROM sga_advice s
 JOIN pga_advice p ON s.inst_id = p.inst_id
 ORDER BY s.inst_id 
 `,
-contention: `SELECT gvs.inst_id,DECODE (request, 0, 'Holder: ', 'waiter:')|| gvl.sid SESS, gvl.sid, gvs.serial#,
+    contention: `SELECT gvs.inst_id,DECODE (request, 0, 'Holder: ', 'waiter:')|| gvl.sid SESS, gvl.sid, gvs.serial#,
          status,
          username,
          event,
@@ -136,7 +197,7 @@ contention: `SELECT gvs.inst_id,DECODE (request, 0, 'Holder: ', 'waiter:')|| gvl
          AND gvl.sid = gvs.sid and gvl.inst_id=gvs.inst_id
 ORDER BY request
 `,
-backups: `SELECT
+    backups: `SELECT
        TO_CHAR(r.start_time, 'YYYY-MM-DD')     Fecha_INICIO
       ,TO_CHAR(r.start_time, 'HH24:MI:SS')     Hora_INICIO
       ,TO_CHAR(r.end_time, 'YYYY-MM-DD')     Fecha_FIN
@@ -165,41 +226,37 @@ backups: `SELECT
     WHERE
         r.start_time > sysdate - 15
 `
-
 };
-
 export async function GET({ cookies, url }) {
-    // Leer sesión Oracle desde la cookie
+
+
+
+
     const session = cookies.get('db_session')?.json();
-
-    if (!session) {
-        return new Response(JSON.stringify({ error: 'Sin sesión' }), {
-            status: 401,
-            headers: { 'Content-Type': 'application/json' }
-        });
-    }
-
-    // Leer el parámetro ?q=alertlog
     const queryName = url.searchParams.get('q');
 
-    if (!queryName || !QUERIES[queryName]) {
-        return new Response(JSON.stringify({ error: `Query '${queryName}' no encontrada` }), {
-            status: 400,
-            headers: { 'Content-Type': 'application/json' }
-        });
+    // Parámetros de la URL
+    const hours = url.searchParams.get('hours');
+    const start = url.searchParams.get('fStart');
+    const end = url.searchParams.get('fEnd');
+
+    if (queryName === 'active_sessions_chart' || queryName === 'active_sessions_details') {
+        try {
+            const binds = {
+                isRelative: start && end ? 0 : 1,
+                hours: Number(hours || 1),
+                fStart: start || '', // default dummy
+                fEnd: end || ''     // default dummy
+            };
+            console.log("##Ejecutando query con binds:", binds);
+            const data = await executeQuery(QUERIES[queryName], session, binds);
+            return new Response(JSON.stringify(data), { status: 200 });
+        } catch (e) {
+            return new Response(JSON.stringify({ error: e.message }), { status: 500 });
+        }
+    } else {
+        const data = await executeQuery(QUERIES[queryName], session);
+        return new Response(JSON.stringify(data), { status: 200 });
     }
 
-    try {
-        const data = await executeQuery(QUERIES[queryName], session);
-        return new Response(JSON.stringify(data), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-        });
-    } catch (e) {
-        console.error(`Error ejecutando query '${queryName}':`, e.message);
-        return new Response(JSON.stringify({ error: e.message }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
-    }
 }

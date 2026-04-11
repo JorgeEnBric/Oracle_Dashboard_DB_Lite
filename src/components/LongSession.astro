@@ -1,7 +1,6 @@
 ---
 import { executeQuery } from '../oracledb.js';
-import Table from './Table.jsx';
-import  AccionButton  from './AccionButton.astro';
+import  AccionButton  from './AccionTable.jsx';
 
 const sessionCookie = Astro.cookies.get('db_session')?.json();
 console.log(sessionCookie);
