@@ -41,7 +41,7 @@
 
 ## Instalación y sso
 
-1. **Instala Node.js**
+1. **Instala y comprueba que tienes Node.js**
    ```bash
    node --version
 3. **Clonar el repositorio:**
