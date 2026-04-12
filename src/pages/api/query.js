@@ -295,7 +295,6 @@ export async function GET({ cookies, url }) {
                 fStart: start || '', // default dummy
                 fEnd: end || ''     // default dummy
             };
-            console.log("##Ejecutando query con binds:", binds);
             const data = await executeQuery(QUERIES[queryName], session, binds);
             return new Response(JSON.stringify(data), { status: 200 });
         } catch (e) {

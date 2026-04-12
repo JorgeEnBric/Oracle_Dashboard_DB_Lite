@@ -17,7 +17,6 @@ export async function POST({ request }) {
         await connection.close();
 
         const sessionData = JSON.stringify({ usuario, password, host, port, service });
-        console.log("Esta es la informacion de la sesion:", sessionData);
 
         // For session, set a cookie with connection info or token
         // For simplicity, set a cookie

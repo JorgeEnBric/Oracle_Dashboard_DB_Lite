@@ -9,7 +9,6 @@ export async function POST({ request, cookies }) {
 
     const data = await request.json();
     const sqlKill = `ALTER SYSTEM KILL SESSION '${data.sid}, ${data.serial}, @${data.instance}'  IMMEDIATE`;
-    console.log("Consulta SQL a ejecutar:", sqlKill);
     const result = await executeQuery(
       sqlKill,
       sessionCookie

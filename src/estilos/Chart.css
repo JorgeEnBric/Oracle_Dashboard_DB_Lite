@@ -37,11 +37,13 @@
     gap: 20px;
 }
 
+
+
 /* Título del gráfico */
 .chart-header h3 {
     color: #e2e8f0;
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 0.80rem;
     font-weight: 600;
     border-left: 4px solid #3b82f6; /* Azul acento */
     padding-left: 0.75rem;
@@ -55,6 +57,7 @@
     border-radius: 8px;
     border: 1px solid #334155;
 }
+
 
 .mode-selector button {
     background: transparent;
@@ -107,7 +110,7 @@
 /* --- INFORMACIÓN Y BADGES --- */
 .range-info {
     color: #94a3b8;
-    font-size: 0.8rem;
+    font-size: 0.52rem;
     background: rgba(100, 116, 139, 0.1);
     padding: 4px 12px;
     border-radius: 6px;
@@ -179,15 +182,15 @@
 
 /* --- CONTENEDOR DEL GRÁFICO --- */
 .chart-container {
-    height: 550px;
     position: relative;
     margin-top: 1.5rem;
     width: 100%;
+    height: 300px;
 }
 
 .chart-hint {
     color: #475569;
-    font-size: 0.72rem;
+    font-size: 0.52rem;
     margin: 10px 0;
     font-style: italic;
     text-align: left; /* Alineado a la izquierda */

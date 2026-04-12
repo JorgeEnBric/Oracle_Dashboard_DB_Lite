@@ -16,6 +16,8 @@
       padding: 0;
       box-sizing: border-box;
       font-family: "Inter", sans-serif;
+      font-size: 12px;
+    
   }
 
   body {
@@ -29,8 +31,10 @@
       justify-content: center;
       align-items: center;
       color: var(--text-main);
-      overflow: hidden;
+      
   }
+
+      
 
   .main-wrapper {
       display: flex;
@@ -44,7 +48,7 @@
       background-color: var(--card-bg);
       padding: 2.5rem;
       border-radius: 20px;
-      width: 450px;
+      width: 340px;
       border: 1px solid var(--border-color);
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   }
@@ -54,7 +58,7 @@
       padding: 1.5rem;
       border-radius: 20px;
       border: 1px solid var(--border-color);
-      width: 450px;
+      width: 340px;
       height: 580px;
       display: none;
       flex-direction: column;
@@ -76,7 +80,7 @@
 
   .logo-section {
       text-align: center;
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
   }
 
   .oracle-icon {
@@ -104,7 +108,8 @@
   }
 
   .input-group {
-      margin-bottom: 1.25rem;
+      padding-bottom: 0.3rem;
+
   }
 
   label {

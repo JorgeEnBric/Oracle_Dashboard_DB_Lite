@@ -14,7 +14,6 @@ export default function PerformanceHub() {
     // Este efecto se dispara cada vez que el Chart emite nuevos parámetros
     useEffect(() => {
         if (!params) return;
-        console.log("Recibidos nuevos parámetros para la tabla:", params);
         async function cargarDetalleTabla() {
             setLoadingTable(true);
             setTableError(null);
@@ -30,7 +29,6 @@ export default function PerformanceHub() {
                 `&hours=${hrs}` +
                 `&fStart=${encodeURIComponent(start)}` +
                 `&fEnd=${encodeURIComponent(end)}`;
-            console.log("Esta es la URL que pido para la tabla:", url);
             try {
                 const res = await fetch(url);
                 const json = await res.json();

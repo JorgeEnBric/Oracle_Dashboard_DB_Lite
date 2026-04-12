@@ -3,7 +3,6 @@ import { executeQuery } from '../oracledb.js';
 import  AccionButton  from './ActionTable.jsx';
 
 const sessionCookie = Astro.cookies.get('db_session')?.json();
-console.log(sessionCookie);
 
 let data = [];
 let error = null;
