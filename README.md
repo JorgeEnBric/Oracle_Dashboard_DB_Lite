@@ -39,7 +39,7 @@
 
 ---
 
-## Instalación y sso
+## Instalación y uso
 
 1. **Instala y comprueba que tienes Node.js**
    ```bash
