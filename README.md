@@ -5,7 +5,7 @@
 ![Oracle](https://img.shields.io/badge/Oracle-F80000?style=for-the-badge&logo=oracle&logoColor=white)
 
 
-> Una consola de administración moderna y ligera para entornos Oracle RAC/NO-RAC, diseñada para simplificar el diagnostico de bases de datos y la visualización de reportes AWR e información clave de ASH y ADDM. Se despliegua como servidor web en tu infraestructura local y privada
+> Una consola de administración moderna y ligera para entornos Oracle RAC/NO-RAC, diseñada para simplificar el diagnostico de bases de datos y la visualización de reportes AWR e información clave de ASH y ADDM. Se despliega como servidor web en tu infraestructura local y privada
 
 ---
 ## Características Principales
