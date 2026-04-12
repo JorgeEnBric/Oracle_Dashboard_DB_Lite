@@ -49,4 +49,5 @@
    git clone https://github.com/JorgeEnBric/Oracle_Dashboard_DB_Lite.git consolelite
    cd consolelite
    npm install
-   npm run
+   npm run build
+   npm start
