@@ -36,12 +36,7 @@ export async function getAWRReport(bd_id, session, bid, eid) {
 //Función que recibe un query y lo ejecuta, devolviendo el resultado
 export async function executeQuery(query, session, params = {}) {
 
-    console.log('params que llegan a executeQuery:', params);
-    console.log('tipo de params:', typeof params);
-    console.log('keys:', Object.keys(params));
 
-    //console.log('Ejecutando query:', query);
-    //console.log('Información de la sesión:', session);
     const { usuario, password, host, port, service } = session;
     try {
         const connection = await oracledb.getConnection({

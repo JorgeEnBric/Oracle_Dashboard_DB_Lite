@@ -137,10 +137,9 @@ export default function ActiveSessionsChart({ onParamsChange }) {
 
         try {
             const res  = await fetch(url);
-            console.log("URL solicitada para el gráfico:", url);
+            
             const json = await res.json();
             if (json.error) { setError(json.error); return; }
-            console.log("Datos recibidos para el gráfico:", json);
 
             const { labels, datasets } = procesarDatos(json);
             labelsRef.current = labels;
@@ -164,7 +163,7 @@ export default function ActiveSessionsChart({ onParamsChange }) {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'bottom', labels: { color: '#94a3b8' } },
+                        legend: { position: 'bottom', labels: { font:{ size: 10 }, color: '#94a3b8' } },
                         zoom: {
                             pan: { enabled: true, mode: 'x', rangeMin: { x: 0 }, rangeMax: { x: labels.length - 1 } },
                             zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' },
@@ -172,8 +171,8 @@ export default function ActiveSessionsChart({ onParamsChange }) {
                         }
                     },
                     scales: {
-                        x: { stacked: true, ticks: { color: '#94a3b8', autoSkip: true, maxTicksLimit: 8 } },
-                        y: { stacked: true, beginAtZero: true, ticks: { color: '#94a3b8' } }
+                        x: { stacked: true, ticks: { font:{ size: 10 }, color: '#94a3b8', autoSkip: true, maxTicksLimit: 8 } },
+                        y: { stacked: true, beginAtZero: true, ticks: { font:{ size: 10 }, color: '#94a3b8' } }
                     }
                 }
             });
@@ -243,14 +242,14 @@ export default function ActiveSessionsChart({ onParamsChange }) {
                 </div>
             </div>
 
-            <div className="chart-container" style={{ height: '550px', position: 'relative' }}>
+            <div className="chart-container" style={{ height: '350px', position: 'relative' }}>
                 {loading && !refreshing && (
                     <div className="loader-overlay">Consultando Oracle ASH...</div>
                 )}
                 {error && (
                     <div className="error-message">⚠️ {error}</div>
                 )}
-                <canvas ref={canvasRef}></canvas>
+                <canvas className='canvas-chart' ref={canvasRef}></canvas>
             </div>
         </div>
     );

@@ -11,8 +11,6 @@ export const onRequest = defineMiddleware((context, next) => {
 
     const dbSession = context.cookies.get('db_session')?.value;
 
-    console.log('Verificando acceso a:', pathname);
-
 
     if (!dbSession) {
         console.log('Sin sesión — redirigiendo a /');

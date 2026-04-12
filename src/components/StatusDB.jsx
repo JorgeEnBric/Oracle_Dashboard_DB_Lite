@@ -33,7 +33,7 @@ export default function AlertLog() {
     if (error)   return <p className="error">Error: {error}</p>;
 
     return (
-        <div className="alert-zone">
+        <div className="status-zone">
             <Table data={data} title="Estado de la base de datos" />
         </div>
     );

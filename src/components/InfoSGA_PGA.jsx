@@ -1,8 +1,8 @@
-// src/components/AlertLog.jsx
+// src/components/InfoSGA_PGA.jsx
 import { useState, useEffect } from 'react';
 import Table from './Table.jsx';
 
-export default function AlertLog() {
+export default function InfoSGAPGA() {
     const [data, setData]       = useState([]);
     const [error, setError]     = useState(null);
     const [loading, setLoading] = useState(true);
@@ -33,9 +33,8 @@ export default function AlertLog() {
     if (error)   return <p className="error">Error: {error}</p>;
 
     return (
-        <div className="alert-zone">
+        <div className="info-sga-pga zone">
             <Table data={data} title="Revisión de SGA y PGA" />
         </div>
     );
 }
-

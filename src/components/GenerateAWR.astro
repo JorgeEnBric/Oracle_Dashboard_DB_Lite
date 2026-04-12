@@ -68,6 +68,7 @@ if (session) {
   const progressTxt = document.getElementById('progress-text') as HTMLSpanElement;
   const errorMsg    = document.getElementById('error-msg') as HTMLDivElement;
   const awrResult   = document.getElementById('awr-result') as HTMLDivElement;
+  import { notify } from "../pages/api/notify";
 
   // Fases simuladas para dar feedback visual mientras se espera la respuesta
   const PHASES = [
@@ -106,8 +107,8 @@ if (session) {
     const start = (document.getElementById('snap_start') as HTMLSelectElement).value;
     const end   = (document.getElementById('snap_end') as HTMLSelectElement).value;
 
-    if (parseInt(start) > parseInt(end)) {
-      alert('Error: El Snap de Inicio no puede ser mayor al Snap de Fin.');
+    if (parseInt(start) >= parseInt(end)) {
+      notify('Error: El Snap de Inicio debe ser menor al Snap de Fin.', 'error');
       return;
     }
 
