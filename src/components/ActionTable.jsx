@@ -98,7 +98,7 @@ export default function ActionTable({ data = [], title, accion }) {
                                                         className="accion-button"
                                                         onClick={() => killSession(row.SID, row['SERIAL#'], row.INST_ID)}
                                                     >
-                                                        Kill session
+                                                        Kill
                                                     </button>
                                                 ) : (
                                                     row[header]?.toString() ?? <span className="null-value">NULL</span>
