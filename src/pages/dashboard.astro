@@ -9,6 +9,7 @@ import InfoSGAPGA from "../components/InfoSGA_PGA.jsx";
 import LongSession from "../components/LongSession.astro";
 import Contention from "../components/Contention.jsx";
 import Backups from "../components/Bakups.jsx";
+import '../estilos/Notify.css';
 ---
 
 <!doctype html>
@@ -16,6 +17,7 @@ import Backups from "../components/Bakups.jsx";
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <title>DBA Console Lite</title>
     </head>
 
@@ -56,7 +58,7 @@ import Backups from "../components/Bakups.jsx";
         </div>
 
         <Dock />
-
+        <div id="toast-container" class="toast-container"></div>
         <script>
             function logout() {
                 fetch("/api/logout", { method: "POST" })
@@ -127,7 +129,7 @@ import Backups from "../components/Bakups.jsx";
     .container {
     width: 100%;
     margin-top: 10px;
-    max-width: 1500px;
+    max-width: 80%;
     padding: 0 2rem 5rem 2rem; /* Más padding abajo para que el Dock no tape nada */
     display: flex;
     flex-direction: column;

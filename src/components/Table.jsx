@@ -4,7 +4,7 @@ import '../estilos/Table.css';
 
 export default function Table({ data = [], title }) {
     const [currentPage, setCurrentPage] = useState(1);
-    const recordsPerPage = 10;
+    const recordsPerPage = 8;
 
     const hasData = Array.isArray(data) && data.length > 0;
     const headers = hasData ? Object.keys(data[0]) : [];

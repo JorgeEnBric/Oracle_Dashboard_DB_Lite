@@ -1,0 +1,176 @@
+  :root {
+      --bg-dark: #0f1117;
+      --card-bg: #1a1d26;
+      --accent-blue: #3b82f6;
+      --accent-red: #e11d48;
+      --accent-green: #10b981;
+      --text-main: #ffffff;
+      --text-muted: #94a3b8;
+      --input-bg: #242936;
+      --border-color: #334155;
+  }
+
+  * {
+    
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Inter", sans-serif;
+  }
+
+  body {
+      background-color: var(--bg-dark);
+      background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      height: 100vh;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: var(--text-main);
+      overflow: hidden;
+  }
+
+  .main-wrapper {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+      width: 100%;
+      justify-content: center;
+  }
+
+  .login-card {
+      background-color: var(--card-bg);
+      padding: 2.5rem;
+      border-radius: 20px;
+      width: 450px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+
+  .tns-editor {
+      background-color: var(--card-bg);
+      padding: 1.5rem;
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+      width: 450px;
+      height: 580px;
+      display: none;
+      flex-direction: column;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+
+  textarea {
+      flex-grow: 1;
+      background-color: #0d0f14;
+      color: var(--accent-green);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 1rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      resize: none;
+      outline: none;
+  }
+
+  .logo-section {
+      text-align: center;
+      margin-bottom: 2rem;
+  }
+
+  .oracle-icon {
+      background-color: var(--accent-red);
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 1rem;
+      border-radius: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 0 20px rgba(225, 29, 72, 0.4);
+  }
+
+  h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+  }
+
+  .subtitle {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+  }
+
+  .input-group {
+      margin-bottom: 1.25rem;
+  }
+
+  label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+  }
+
+  input,
+  .custom-select {
+      width: 100%;
+      padding: 0.8rem;
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      color: white;
+  }
+
+  .grid-inputs {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1rem;
+  }
+
+  .button-group {
+      margin-top: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+  }
+
+  button {
+      width: 100%;
+      padding: 0.8rem;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: 0.2s;
+  }
+
+  .btn-primary {
+      background-color: var(--accent-blue);
+      color: white;
+  }
+
+  .btn-save {
+      background-color: var(--accent-green);
+      color: white;
+  }
+
+  .btn-save:hover {
+      background-color: #059669;
+      transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+  }
+
+  .btn-secondary:hover {
+      background: var(--border-color);
+      color: white;
+  }
+
+ 

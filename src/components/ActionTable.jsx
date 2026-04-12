@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import '../estilos/Table.css';
 import '../estilos/ActionTable.css';
+import {  notify } from '../pages/api/notify.js';
 
 export default function ActionTable({ data = [], title, accion }) {
     // Estado local para manejar los datos (por si se eliminan filas tras el kill)
@@ -9,7 +10,7 @@ export default function ActionTable({ data = [], title, accion }) {
     
     // --- Lógica de Paginación ---
     const [currentPage, setCurrentPage] = useState(1);
-    const recordsPerPage = 12;
+    const recordsPerPage = 8;
 
     // Sincronizar tableData si los props cambian (importante para dashboards dinámicos)
     useEffect(() => {
@@ -53,14 +54,14 @@ export default function ActionTable({ data = [], title, accion }) {
             const result = await response.json();
             
             if (result.success) {
-                alert(`Sesión ${sid} eliminada correctamente.`);
+                notify(`Sesión ${sid} eliminada correctamente.`, 'success');
                 // Filtrar la fila eliminada de la vista local
                 setTableData(prev => prev.filter(row => row.SID !== sid));
             } else {
-                alert(`Error: ${result.error}`);
+                notify(`Error: ${result.error}`, 'error');
             }
         } catch (err) {
-            alert(`API Error: ${err.message}`);
+            notify(`API Error: ${err.message}`, 'error');
         }
     }
 

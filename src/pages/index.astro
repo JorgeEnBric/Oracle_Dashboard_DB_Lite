@@ -1,12 +1,24 @@
 ---
-// index.astro
+//Cargando el css
+import "../estilos/Index.css";
+import "../estilos/Notify.css";
 ---
+
 <!doctype html>
 <html lang="es">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <title>Console Lite</title>
+        <script>
+            import {
+                testConnection,
+                quickSaveConnection,
+                saveEditorContent,
+                toggleTNS,
+            } from "./api/index.js";
+        </script>
     </head>
     <body>
         <div class="main-wrapper">
@@ -14,14 +26,55 @@
                 <div class="login-card">
                     <div class="logo-section">
                         <div class="oracle-icon">
-                             <svg
-                            viewBox="0 0 24 24"
-                            fill="white"
-                            xmlns="http://www.w3.org/2000/svg"
-                            ><path
-                                d="M12 2C6.48 2 2 4.69 2 8v8c0 3.31 4.48 6 10 6s10-2.69 10-6V8c0-3.31-4.48-6-10-6zm0 18c-4.42 0-8-2.24-8-4v-1.11c1.88 1.28 4.75 2.11 8 2.11s6.12-.83 8-2.11V16c0 1.76-3.58 4-8 4zm0-6c-4.42 0-8-2.24-8-4V6.89c1.88 1.28 4.75 2.11 8 2.11s6.12-.83 8-2.11V10c0 1.76-3.58 4-8 4zm0-6c-4.42 0-8-2.24-8-4s3.58-4 8-4 8 1.79 8 4-3.58 4-8 4z"
-                            ></path></svg
-                        >
+                            <svg
+                                width="100"
+                                height="100"
+                                viewBox="0 0 100 100"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <rect
+                                    width="100"
+                                    height="100"
+                                    rx="22"
+                                    fill="url(#paint0_linear)"></rect>
+
+                                <path
+                                    d="M50 32C62.1503 32 72 29.3137 72 26C72 22.6863 62.1503 20 50 20C37.8497 20 28 22.6863 28 26C28 29.3137 37.8497 32 50 32Z"
+                                    fill="white"></path>
+
+                                <path
+                                    d="M72 34.5C72 37.8137 62.1503 40.5 50 40.5C37.8497 40.5 28 37.8137 28 34.5V30.125C31.5 32.5 40.5 33.5 50 33.5C59.5 33.5 68.5 32.5 72 30.125V34.5Z"
+                                    fill="white"></path>
+
+                                <path
+                                    d="M72 45.5C72 48.8137 62.1503 51.5 50 51.5C37.8497 51.5 28 48.8137 28 45.5V41.125C31.5 43.5 40.5 44.5 50 44.5C59.5 44.5 68.5 43.5 72 41.125V45.5Z"
+                                    fill="white"></path>
+
+                                <path
+                                    d="M72 56.5C72 59.8137 62.1503 62.5 50 62.5C37.8497 62.5 28 59.8137 28 56.5V52.125C31.5 54.5 40.5 55.5 50 55.5C59.5 55.5 68.5 54.5 72 52.125V56.5Z"
+                                    fill="white"></path>
+
+                                <path
+                                    d="M72 67.5C72 70.8137 62.1503 73.5 50 73.5C37.8497 73.5 28 70.8137 28 67.5V63.125C31.5 65.5 40.5 66.5 50 66.5C59.5 66.5 68.5 65.5 72 63.125V67.5Z"
+                                    fill="white"></path>
+
+                                <defs>
+                                    <linearGradient
+                                        id="paint0_linear"
+                                        x1="50"
+                                        y1="0"
+                                        x2="50"
+                                        y2="100"
+                                        gradientUnits="userSpaceOnUse"
+                                    >
+                                        <stop stop-color="#FF3B30"></stop>
+
+                                        <stop offset="1" stop-color="#D70015"
+                                        ></stop>
+                                    </linearGradient>
+                                </defs>
+                            </svg>
                         </div>
                         <h1>Oracle Console Lite</h1>
                         <p class="subtitle">Database Management System Lite</p>
@@ -29,44 +82,93 @@
 
                     <form action="/api/connect" method="POST">
                         <div class="input-group">
-                            <label for="savedConnections">Conexiones Guardadas</label>
+                            <label for="savedConnections"
+                                >Conexiones Guardadas</label
+                            >
                             <select id="savedConnections" class="custom-select">
-                                <option value="">-- Seleccionar conexión --</option>
+                                <option value=""
+                                    >-- Seleccionar conexión --</option
+                                >
                             </select>
                         </div>
 
                         <div class="input-group">
                             <label for="usuario">Usuario</label>
-                            <input type="text" id="usuario" name="usuario" placeholder="DBA" />
+                            <input
+                                type="text"
+                                id="usuario"
+                                name="usuario"
+                                placeholder="DBA"
+                            />
                         </div>
 
                         <div class="input-group">
                             <label for="password">Contraseña</label>
-                            <input type="password" id="password" name="password" placeholder="Pass" />
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                placeholder="Pass"
+                            />
                         </div>
 
                         <div class="grid-inputs">
                             <div class="input-group">
                                 <label for="host">Host</label>
-                                <input type="text" id="host" name="host" placeholder="localhost" required />
+                                <input
+                                    type="text"
+                                    id="host"
+                                    name="host"
+                                    placeholder="localhost"
+                                    required
+                                />
                             </div>
                             <div class="input-group">
                                 <label for="port">Puerto</label>
-                                <input type="number" id="port" name="port" value="1521" required />
+                                <input
+                                    type="number"
+                                    id="port"
+                                    name="port"
+                                    value="1521"
+                                    required
+                                />
                             </div>
                         </div>
 
                         <div class="input-group">
                             <label for="service">Service Name</label>
-                            <input type="text" id="service" name="service" placeholder="ORCLPDB1" required />
+                            <input
+                                type="text"
+                                id="service"
+                                name="service"
+                                placeholder="ORCLPDB1"
+                                required
+                            />
                         </div>
 
                         <div class="button-group">
-                            <button type="submit" class="btn-primary">Conectar</button>
-                            <button type="button" id="saveQuickConn" class="btn-save">Guardar Conexión</button>
-                            <div class="grid-inputs" style="grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0;">
-                                <button type="button" id="testButton" class="btn-secondary">Test</button>
-                                <button type="button" id="addTNS" class="btn-secondary">JSON</button>
+                            <button type="submit" class="btn-primary"
+                                >Conectar</button
+                            >
+                            <button
+                                type="button"
+                                id="saveQuickConn"
+                                class="btn-save">Guardar Conexión</button
+                            >
+                            <div
+                                class="grid-inputs"
+                                style="grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0;"
+                            >
+                                <button
+                                    type="button"
+                                    id="testButton"
+                                    class="btn-secondary">Test</button
+                                >
+                                <button
+                                    type="button"
+                                    id="addTNS"
+                                    class="btn-secondary">JSON</button
+                                >
                             </div>
                         </div>
                     </form>
@@ -74,229 +176,20 @@
             </div>
 
             <section id="tnsPanel" class="tns-editor">
-                <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px;">
+                <p
+                    style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 10px;"
+                >
                     Tus conexiones en connections.json
                 </p>
                 <textarea id="editConnections" spellcheck="false"></textarea>
-                <button type="button" id="saveTNS" class="btn-primary" style="margin-top: 10px;">Actualizar JSON</button>
+                <button
+                    type="button"
+                    id="saveTNS"
+                    class="btn-primary"
+                    style="margin-top: 10px;">Actualizar JSON</button
+                >
             </section>
         </div>
-
-        <script>
-            const tnsPanel = document.getElementById("tnsPanel");
-            const editor = document.getElementById("editConnections");
-            const connectionSelect = document.getElementById("savedConnections");
-
-            
-            async function testConnection() {
-                const usuario = document.getElementById("usuario").value;
-                const password = document.getElementById("password").value;
-                const host = document.getElementById("host").value;
-                const port = document.getElementById("port").value;
-                const service = document.getElementById("service").value;
-
-                try {
-                    const response = await fetch("/api/test-connection", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ usuario, password, host, port, service }),
-                    });
-                    const result = await response.json(); 
-                    if (result.success) {
-                        alert("Conexión exitosa"); 
-                    }
-                } catch (err) {
-                    alert("Error al probar conexión: " + err.message);
-                }
-            }
-
-            // Cargar datos del archivo físico
-            async function loadSavedData() {
-                try {
-                    const res = await fetch('/api/get-tns');
-                    const data = await res.json();
-                    if (data.success && data.connections) {
-                        editor.value = JSON.stringify(data.connections, null, 4);
-                        connectionSelect.innerHTML = '<option value="">-- Seleccionar conexión --</option>';
-                        data.connections.forEach((conn, index) => {
-                            const opt = document.createElement('option');
-                            opt.value = index;
-                            opt.textContent = conn.name || `${conn.host} - ${conn.service}`;
-                            connectionSelect.appendChild(opt);
-                        });
-
-                        connectionSelect.onchange = (e) => {
-                            const selected = data.connections[e.target.value];
-                            if (selected) {
-                                document.getElementById("host").value = selected.host || '';
-                                document.getElementById("port").value = selected.port || 1521;
-                                document.getElementById("service").value = selected.service || '';
-                                document.getElementById("usuario").value = selected.usuario || '';
-                            }
-                        };
-                    }
-                } catch (err) { console.error("Error cargando TNS:", err); }
-            }
-
-            async function quickSaveConnection() {
-                const newConn = {
-                    name: document.getElementById("service").value + " (" + document.getElementById("host").value + ")",
-                    host: document.getElementById("host").value,
-                    port: parseInt(document.getElementById("port").value),
-                    service: document.getElementById("service").value,
-                    usuario: document.getElementById("usuario").value
-                };
-
-                if (!newConn.host || !newConn.service) {
-                    alert("Completa al menos Host y Service Name");
-                    return;
-                }
-
-                try {
-                    const res = await fetch('/api/get-tns');
-                    const data = await res.json();
-                    const currentConns = data.connections || [];
-                    currentConns.push(newConn);
-
-                    const saveRes = await fetch("/api/save-tns", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ connections: currentConns }),
-                    });
-
-                    if ((await saveRes.json()).success) {
-                        alert("Conexión guardada exitosamente");
-                        loadSavedData();
-                    }
-                } catch (err) { alert("Error al guardar: " + err.message); }
-            }
-
-            async function saveEditorContent() {
-                try {
-                    const connections = JSON.parse(editor.value);
-                    const res = await fetch("/api/save-tns", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ connections }),
-                    });
-                    if ((await res.json()).success) {
-                        alert("Archivo actualizado");
-                        loadSavedData();
-                    }
-                } catch (err) { alert("JSON inválido"); }
-            }
-
-            function toggleTNS() {
-                tnsPanel.style.display = (tnsPanel.style.display === "none" || tnsPanel.style.display === "") ? "flex" : "none"; 
-            }
-
-            document.addEventListener("DOMContentLoaded", () => {
-                loadSavedData(); 
-                document.getElementById("testButton").addEventListener("click", testConnection);
-                document.getElementById("addTNS").addEventListener("click", toggleTNS); 
-                document.getElementById("saveTNS").addEventListener("click", saveEditorContent);
-                document.getElementById("saveQuickConn").addEventListener("click", quickSaveConnection);
-            });
-        </script>
-
-        <style>
-            :root {
-                --bg-dark: #0f1117;
-                --card-bg: #1a1d26;
-                --accent-blue: #3b82f6;
-                --accent-red: #e11d48;
-                --accent-green: #10b981;
-                --text-main: #ffffff;
-                --text-muted: #94a3b8;
-                --input-bg: #242936;
-                --border-color: #334155;
-            }
-
-            * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Inter", sans-serif; } 
-
-            body {
-                background-color: var(--bg-dark); 
-                background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                                  linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px); 
-                background-size: 40px 40px; 
-                height: 100vh;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                color: var(--text-main);
-                overflow: hidden;
-            }
-
-            .main-wrapper { display: flex; gap: 2rem; align-items: center; width: 100%; justify-content: center; }
-
-            .login-card {
-                background-color: var(--card-bg); 
-                padding: 2.5rem; 
-                border-radius: 20px;
-                width: 450px;
-                border: 1px solid var(--border-color); 
-                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); 
-            }
-
-            .tns-editor {
-                background-color: var(--card-bg);
-                padding: 1.5rem;
-                border-radius: 20px;
-                border: 1px solid var(--border-color);
-                width: 450px;
-                height: 580px;
-                display: none;
-                flex-direction: column;
-                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            }
-
-            textarea {
-                flex-grow: 1;
-                background-color: #0d0f14;
-                color: var(--accent-green);
-                border: 1px solid var(--border-color);
-                border-radius: 10px;
-                padding: 1rem;
-                font-family: 'Fira Code', monospace;
-                font-size: 0.85rem;
-                resize: none;
-                outline: none;
-            }
-
-            .logo-section { text-align: center; margin-bottom: 2rem; } 
-            .oracle-icon {
-                background-color: var(--accent-red); 
-                width: 60px; height: 60px; 
-                margin: 0 auto 1rem;
-                border-radius: 12px;
-                display: flex; justify-content: center; align-items: center; 
-                box-shadow: 0 0 20px rgba(225, 29, 72, 0.4); 
-            }
-            
-            h1 { font-size: 1.75rem; font-weight: 700; } 
-            .subtitle { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; } 
-            
-            .input-group { margin-bottom: 1.25rem; }
-            label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; }
-            
-            input, .custom-select {
-                width: 100%; padding: 0.8rem;
-                background-color: var(--input-bg);
-                border: 1px solid var(--border-color); 
-                border-radius: 10px; color: white;
-            }
-
-            .grid-inputs { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; } 
-            .button-group { margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; } 
-            
-            button { width: 100%; padding: 0.8rem; border-radius: 10px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; } 
-            
-            .btn-primary { background-color: var(--accent-blue); color: white; } 
-            .btn-save { background-color: var(--accent-green); color: white; }
-            .btn-save:hover { background-color: #059669; transform: translateY(-1px); }
-            
-            .btn-secondary { background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); } 
-            .btn-secondary:hover { background: var(--border-color); color: white; } 
-        </style>
+        <div id="toast-container" class="toast-container"></div>
     </body>
 </html>
