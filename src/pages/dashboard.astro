@@ -9,7 +9,9 @@ import InfoSGAPGA from "../components/InfoSGA_PGA.jsx";
 import LongSession from "../components/LongSession.astro";
 import Contention from "../components/Contention.jsx";
 import Backups from "../components/Bakups.jsx";
+import AIChat from "../components/AIChat.jsx";
 import '../estilos/Notify.css';
+import '../estilos/AIChat.css';
 ---
 
 <!doctype html>
@@ -54,6 +56,10 @@ import '../estilos/Notify.css';
 
             <section id="backups" class="component hidden-component">
                 <Backups client:visible/>
+            </section>
+
+            <section id="ai-chat" class="component hidden-component">
+                <AIChat client:visible/>
             </section>
         </div>
 
